@@ -131,9 +131,6 @@ export class BaseComponent {
         Registry.set(this.#el, this.constructor.componentName, this);
 
         logger.info(`${this.constructor.componentName}: initialized`, this.#el);
-
-        // Call subclass hook
-        this._init();
     }
 
     // --- Public Accessors
@@ -312,13 +309,6 @@ export class BaseComponent {
     // ---Lifecycle
 
     /**
-     * Called automatically by the constructor after the instance is set up.
-     * Override in subclasses to perform initialization work.
-     * @protected
-     */
-    _init() { }
-
-    /**
      * Teardown the component:
      *  1. Call _onDestroy() hook for subclass cleanup
      *  2. Remove all tracked DOM listeners
@@ -330,9 +320,6 @@ export class BaseComponent {
         if (this.#destroyed) return;
         this.#destroyed = true;
 
-        // Let subclasses do their own cleanup first
-        this._onDestroy();
-
         this.emit('destroy', this);
 
         // Tear down listeners
@@ -343,14 +330,6 @@ export class BaseComponent {
         Registry.delete(this.#el, this.constructor.componentName);
         logger.info(`${this.constructor.componentName}: destroyed`, this.#el);
     }
-
-    /**
-     * Override in subclasses for component-specific teardown logic.
-     * Called before listeners / bus are cleared.
-     * 
-     * @protected
-     */
-    _onDestroy() { }
 
     // --- Static Factory Helpers 
 

@@ -57,10 +57,16 @@ export class Theme extends BaseComponent {
         return defaults;
     }
 
+    #storage = new DataStorage({ jsonEncode: false });
+
+    constructor(target, options = {}) {
+        super(target, options);
+        this._init();
+    }
+
     // --- Core
 
     _init() {
-        this.storage = new DataStorage({ jsonEncode: false });
         this._modes = {
             light: 'light',
             dark: 'dark',
@@ -121,30 +127,13 @@ export class Theme extends BaseComponent {
         this._updateTriggerState(this._getTheme());
     }
 
-    _onDestroy() {
-        this.storage.remove(this.options.storageKey);
-        removeClasses(this.options.parent, this.options.className);
-        removeAttributes(this.options.parent, [this.options.attributeName]);
-
-        this._getTriggers().forEach(trigger => {
-            if (this._isClickable(trigger)) {
-                removeAttributes(trigger, ['aria-pressed', 'aria-current']);
-            }
-
-            if (this._isChangeable(trigger)) {
-                if (trigger.type === 'select-one') trigger.selectedIndex = 0;
-                if (trigger.type === 'radio' || trigger.type === 'checkbox') trigger.checked = false;
-            }
-        });
-    }
-
     _getTriggers() {
         return queryAll(this.options.trigger);
     }
 
     /** @returns {string} */
     _getTheme() {
-        return this.storage.get('theme', this._modes.auto);
+        return this.#storage.get('theme', this._modes.auto);
     }
 
     /**
@@ -246,9 +235,9 @@ export class Theme extends BaseComponent {
 
         // Update storage
         if (mode === this._modes.auto) {
-            this.storage.remove(this.options.storageKey);
+            this.#storage.remove(this.options.storageKey);
         } else {
-            this.storage.set(this.options.storageKey, mode);
+            this.#storage.set(this.options.storageKey, mode);
         }
 
         // Update DOM classes
@@ -267,5 +256,24 @@ export class Theme extends BaseComponent {
         this._updateTriggerState(mode);
 
         this.emit('change', this);
+    }
+
+    destroy() {
+        this.#storage.remove(this.options.storageKey);
+        removeClasses(this.options.parent, this.options.className);
+        removeAttributes(this.options.parent, [this.options.attributeName]);
+
+        this._getTriggers().forEach(trigger => {
+            if (this._isClickable(trigger)) {
+                removeAttributes(trigger, ['aria-pressed', 'aria-current']);
+            }
+
+            if (this._isChangeable(trigger)) {
+                if (trigger.type === 'select-one') trigger.selectedIndex = 0;
+                if (trigger.type === 'radio' || trigger.type === 'checkbox') trigger.checked = false;
+            }
+        });
+
+        super.destroy();
     }
 }

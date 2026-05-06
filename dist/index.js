@@ -928,7 +928,6 @@ var BaseComponent = class {
 		this.#transition = new Transition(this.#options);
 		Registry.set(this.#el, this.constructor.componentName, this);
 		logger.info(`${this.constructor.componentName}: initialized`, this.#el);
-		this._init();
 	}
 	/** The root DOM element this component is bound to. */
 	get el() {
@@ -1073,12 +1072,6 @@ var BaseComponent = class {
 		return this.#domEvents.getAll();
 	}
 	/**
-	* Called automatically by the constructor after the instance is set up.
-	* Override in subclasses to perform initialization work.
-	* @protected
-	*/
-	_init() {}
-	/**
 	* Teardown the component:
 	*  1. Call _onDestroy() hook for subclass cleanup
 	*  2. Remove all tracked DOM listeners
@@ -1089,20 +1082,12 @@ var BaseComponent = class {
 	destroy() {
 		if (this.#destroyed) return;
 		this.#destroyed = true;
-		this._onDestroy();
 		this.emit("destroy", this);
 		this.#domEvents.removeAll();
 		this.#bus.clear();
 		Registry.delete(this.#el, this.constructor.componentName);
 		logger.info(`${this.constructor.componentName}: destroyed`, this.#el);
 	}
-	/**
-	* Override in subclasses for component-specific teardown logic.
-	* Called before listeners / bus are cleared.
-	* 
-	* @protected
-	*/
-	_onDestroy() {}
 	/**
 	* Retrieve an existing instance by CSS selector or Element.
 	* 
@@ -1280,8 +1265,12 @@ var Theme = class extends BaseComponent {
 	static get defaults() {
 		return defaults;
 	}
+	#storage = new DataStorage({ jsonEncode: false });
+	constructor(target, options = {}) {
+		super(target, options);
+		this._init();
+	}
 	_init() {
-		this.storage = new DataStorage({ jsonEncode: false });
 		this._modes = {
 			light: "light",
 			dark: "dark",
@@ -1314,24 +1303,12 @@ var Theme = class extends BaseComponent {
 		if (this._getTheme() === this._modes.auto && isDarkPreferred || this._getTheme() === this._modes.dark) addClasses(this.options.parent, this.options.className);
 		this._updateTriggerState(this._getTheme());
 	}
-	_onDestroy() {
-		this.storage.remove(this.options.storageKey);
-		removeClasses(this.options.parent, this.options.className);
-		removeAttributes(this.options.parent, [this.options.attributeName]);
-		this._getTriggers().forEach((trigger) => {
-			if (this._isClickable(trigger)) removeAttributes(trigger, ["aria-pressed", "aria-current"]);
-			if (this._isChangeable(trigger)) {
-				if (trigger.type === "select-one") trigger.selectedIndex = 0;
-				if (trigger.type === "radio" || trigger.type === "checkbox") trigger.checked = false;
-			}
-		});
-	}
 	_getTriggers() {
 		return queryAll(this.options.trigger);
 	}
 	/** @returns {string} */
 	_getTheme() {
-		return this.storage.get("theme", this._modes.auto);
+		return this.#storage.get("theme", this._modes.auto);
 	}
 	/**
 	* Determine the theme mode from an element.
@@ -1406,13 +1383,26 @@ var Theme = class extends BaseComponent {
 	change(mode) {
 		const isDarkPreferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
 		const shouldAddDarkClass = mode === this._modes.dark || mode === this._modes.auto && isDarkPreferred;
-		if (mode === this._modes.auto) this.storage.remove(this.options.storageKey);
-		else this.storage.set(this.options.storageKey, mode);
+		if (mode === this._modes.auto) this.#storage.remove(this.options.storageKey);
+		else this.#storage.set(this.options.storageKey, mode);
 		if (shouldAddDarkClass) addClasses(this.options.parent, this.options.className);
 		else removeClasses(this.options.parent, this.options.className);
 		setAttributes(this.options.parent, { [this.options.attributeName]: mode });
 		this._updateTriggerState(mode);
 		this.emit("change", this);
+	}
+	destroy() {
+		this.#storage.remove(this.options.storageKey);
+		removeClasses(this.options.parent, this.options.className);
+		removeAttributes(this.options.parent, [this.options.attributeName]);
+		this._getTriggers().forEach((trigger) => {
+			if (this._isClickable(trigger)) removeAttributes(trigger, ["aria-pressed", "aria-current"]);
+			if (this._isChangeable(trigger)) {
+				if (trigger.type === "select-one") trigger.selectedIndex = 0;
+				if (trigger.type === "radio" || trigger.type === "checkbox") trigger.checked = false;
+			}
+		});
+		super.destroy();
 	}
 };
 //#endregion
