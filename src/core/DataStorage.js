@@ -1,4 +1,20 @@
-import { isString, isEmpty } from './utils.js';
+import { isEmpty } from './utils.js';
+
+/**
+ * @typedef {Object} Options
+ * @property {string} prefix The prefix for the storage keys.
+ * @property {string} delimiter The delimiter for the storage keys.
+ * @property {boolean} jsonEncode Whether to JSON encode values before storing.
+ * @property {'local' | 'session'} storageType The type of storage to use.
+ */
+
+/** @type {Options} */
+const defaults = {
+    prefix: '',
+    delimiter: ':',
+    jsonEncode: true,
+    storageType: 'local'
+};
 
 /**
  * DataStorage
@@ -7,22 +23,15 @@ import { isString, isEmpty } from './utils.js';
  */
 export class DataStorage {
 
-    /** @type {string|undefined} */
-    #prefix = undefined;
-
-    /** @type {string} */
-    #delimiter = ':';
-
-    /** @type {Storage} */
-    #storage = localStorage
-
     /**
-     * @param {string} [keyPrefix] 
-     * @param {'local'|'session'} [storageType]
+     * Constructor
+     * 
+     * @param {Options} [options]
      */
-    constructor(keyPrefix, storageType) {
-        this.#prefix = isString(keyPrefix) ? `${keyPrefix}` : '';
-        if (storageType === 'session') this.#storage = sessionStorage;
+    constructor(options = {}) {
+        this.options = { ...defaults, ...options };
+        this.storage = this.options.storageType === 'session' ? sessionStorage : localStorage;
+        this.options.delimiter = isEmpty(this.options.prefix) ? '' : this.options.delimiter;
     }
 
     // --- Core
@@ -31,10 +40,20 @@ export class DataStorage {
      * Get a prefixed or direct key.
      * 
      * @param {string} key 
-     * @returns {string|null}
+     * @returns {string}
      * */
-    #key(key) {
-        return isString(key) ? `${this.#prefix}${this.#delimiter}${key}` : key;
+    _getKey(key) {
+        return `${this.options.prefix}${this.options.delimiter}${key}`;
+    }
+
+    /**
+     * Get the value to store, optionally JSON encoded.
+     * 
+     * @param {any} value 
+     * @returns {string}
+     */
+    _getValue(value) {
+        return this.options.jsonEncode ? JSON.stringify(value) : value;
     }
 
     // --- Public API
@@ -46,7 +65,7 @@ export class DataStorage {
      * @returns {boolean}
      */
     has(key) {
-        return this.#key(key) in this.#storage;
+        return this._getKey(key) in this.storage;
     }
 
     /**
@@ -56,7 +75,7 @@ export class DataStorage {
      * @param {any} value 
      */
     set(key, value) {
-        this.#storage.setItem(this.#key(key), JSON.stringify(value));
+        this.storage.setItem(this._getKey(key), this._getValue(value));
     }
 
     /**
@@ -67,9 +86,9 @@ export class DataStorage {
      * @returns {any}
      */
     get(key, defaultValue = null) {
-        const item = this.#storage.getItem(this.#key(key));
+        const item = this.storage.getItem(this._getKey(key));
 
-        return item ? JSON.parse(item) : defaultValue;
+        return item ? this._getValue(item) : defaultValue;
     }
 
     /**
@@ -81,10 +100,10 @@ export class DataStorage {
      */
     remove(key) {
         let items = key instanceof Array ? key : [key];
-        items = items.map((x) =>  this.#key(x));
+        items = items.map((x) =>  this._getKey(x));
 
         for (const item of items) {
-            this.#storage.removeItem(item);
+            this.storage.removeItem(item);
         }
     }
 
@@ -95,15 +114,15 @@ export class DataStorage {
      */
     clear(keyPrefix) {
         if (!isEmpty(keyPrefix)) {
-            for (const key in this.#storage) {
-                if (key.startsWith(`${this.#prefix}${this.#delimiter}`)) {
-                    this.#storage.removeItem(key);
+            for (const key in this.storage) {
+                if (key.startsWith(`${this.options.prefix}${this.options.delimiter}`)) {
+                    this.storage.removeItem(key);
                 }
             }  
 
             return;
         }
 
-        this.#storage.clear();
+        this.storage.clear();
     }
 }

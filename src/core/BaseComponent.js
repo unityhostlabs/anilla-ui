@@ -86,7 +86,7 @@ export class BaseComponent {
      * Constructor
      * 
      * @param {string|Element} target CSS selector string or DOM Element.
-     * @param {Record<string, any>} [options]
+     * @param {O} [options]
      */
     constructor(target, options = {}) {
         // Resolve element
@@ -208,8 +208,56 @@ export class BaseComponent {
      * @param {keyof T} event 
      * @param {...any} args
      */
+    // emit(event, ...args) {
+    //     this.#bus.emit(event, ...args);
+    // }
+
+    /**
+     * Emit a component event.
+     *
+     * Fires on two pipelines simultaneously:
+     *   1. Internal EventBus  — reaches listeners registered via this.on()
+     *   2. Native DOM event   — reaches listeners registered via element.addEventListener()
+     *
+     * The native CustomEvent carries all extra arguments merged into a
+     * `detail` object alongside the component instance:
+     *
+     *   this.emit('change', { from: 'a', to: 'b' })
+     *
+     *   // EventBus listener
+     *   modal.on('change', (payload) => payload)  // { from: 'a', to: 'b' }
+     *
+     *   // DOM listener
+     *   el.addEventListener('ui:change', (e) => e.detail)
+     *   // { instance: modal, from: 'a', to: 'b' }
+     *
+     * The native event name is prefixed with config.dataPrefix + ':' to avoid
+     * collisions with built-in DOM events:
+     *   'change' → 'ui:change'
+     *   'shown'  → 'ui:shown'
+     *
+     * The CustomEvent bubbles by default so parent elements can also listen.
+     *
+     * @param {keyof T} event
+     * @param {...any} args
+     */
     emit(event, ...args) {
+        // Fire on the internal bus
         this.#bus.emit(event, ...args);
+
+        // Dispatch a native CustomEvent on the element
+        // Merge all extra args + the component instance into the detail object.
+        const detail = Object.assign({ instance: this }, ...args.map((arg) =>
+            arg !== null && typeof arg === 'object' && !Array.isArray(arg) ? arg : { data: arg }
+        ));
+
+        this.#el.dispatchEvent(
+            new CustomEvent(`${config.dataPrefix}:${event}`, {
+                detail,
+                bubbles: true,
+                cancelable: true,
+            })
+        );
     }
 
     /**

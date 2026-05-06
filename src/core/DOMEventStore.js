@@ -33,8 +33,10 @@ export class DOMEventStore {
         this.#entries = this.#entries.filter((entry) => {
             if (entry.el === el && entry.type === type && entry.handler === handler) {
                 el.removeEventListener(type, handler, entry.options);
+                
                 return false;
             }
+
             return true;
         });
     }

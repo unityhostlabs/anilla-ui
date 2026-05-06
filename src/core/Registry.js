@@ -150,6 +150,7 @@ export const Registry = {
         const attr = el.getAttribute(idAttr());
         if (!attr) return;
         store.delete(`${componentName}::${attr}`);
+        el.removeAttribute(idAttr());
         logger.info(`Registry: unregistered <${componentName}>`);
     },
 

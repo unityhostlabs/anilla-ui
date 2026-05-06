@@ -83,27 +83,31 @@ export const removeClasses = (el, classString) => {
 }
 
 /**
- * Finds the first DOM element matching the selector.
+ * Finds the first DOM element matching the selector or returns a direct element reference.
  * 
  * @template {keyof HTMLElementTagNameMap | string} K
- * @param {K} selector - The CSS selector (e.g. 'button', '.class', '#id')
+ * @param {K | HTMLElement} selectorOrElement - CSS selector (e.g. 'button', '.class', '#id') or a direct element reference
  * @param {ParentNode} [context=document] - The root element to search within
  * @returns {(K extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[K] : HTMLElement) | null}
  */
-export function query(selector, context = document) {
-    return context.querySelector(selector);
+export function query(selectorOrElement, context = document) {
+    if (selectorOrElement instanceof HTMLElement) return selectorOrElement;
+
+    return context.querySelector(selectorOrElement);
 }
 
 /**
- * Finds all DOM elements matching the selector and returns them as an Array.
+ * Finds DOM elements by selector or returns from element map.
  * 
  * @template {keyof HTMLElementTagNameMap | string} K
- * @param {K} selector - The CSS selector
+ * @param {K | Map<string, HTMLElement>} selectorOrMap - CSS selector or Map of elements
  * @param {ParentNode} [context=document] - The root element to search within
- * @returns {Array<K extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[K] : HTMLElement>}
+ * @returns {Array<HTMLElement>}
  */
-export function queryAll(selector, context = document) {
-    return Array.from(context.querySelectorAll(selector));
+export function queryAll(selectorOrMap, context = document) {
+    if (selectorOrMap instanceof Map) return Array.from(selectorOrMap.values());
+
+    return Array.from(context.querySelectorAll(selectorOrMap));
 }
 
 /**
@@ -151,16 +155,6 @@ export function isEmpty(value) {
         || typeof value === 'string' && value.trim() === '' 
         || value instanceof Array && value.length === 0 
         || value instanceof Object && Object.keys(value).length === 0;
-}
-
-/**
- * String type checker
- * 
- * @param {string} value
- * @returns {boolean}
- */
-export function isString(value) {
-    return typeof value === 'string';
 }
 
 /**

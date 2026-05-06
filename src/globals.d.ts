@@ -1,5 +1,5 @@
-/** Shortcut for all standard browser events */
-type BrowserEvents = GlobalEventHandlersEventMap;
+/** Shortcut for all standard browser events including Window-specific ones */
+type BrowserEvents = GlobalEventHandlersEventMap & WindowEventHandlersEventMap;
 
 /** Your reusable handler using the shortcut */
 type DOMEventHandler<K extends keyof BrowserEvents> = 
