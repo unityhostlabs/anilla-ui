@@ -1,0 +1,222 @@
+/* --- Fonts --- */
+/* @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap'); */
+@import url('font.css');
+
+/* --- Tailwind --- */
+@import "tailwindcss";
+
+/* --- Plugins --- */
+@plugin "@tailwindcss/typography";
+
+/* --- Custom Variants --- */
+@custom-variant hover (&:hover);
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* --- Theme Variables --- */
+@theme {
+    /* Typography */
+    --font-body: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --color-brand-text-light: var(--color-gray-900);
+    --color-brand-text-dark: var(--color-white);
+    --color-brand-bg-light: var(--color-white);
+    --color-brand-bg-dark: var(--color-gray-900);
+
+    /* Semantic Colors */
+    --color-brand-50: var(--color-rose-50);
+    --color-brand-100: var(--color-rose-100);
+    --color-brand-200: var(--color-rose-200);
+    --color-brand-300: var(--color-rose-300);
+    --color-brand-400: var(--color-rose-400);
+    --color-brand-500: var(--color-rose-500);
+    --color-brand-600: var(--color-rose-600);
+    --color-brand-700: var(--color-rose-700);
+    --color-brand-800: var(--color-rose-800);
+    --color-brand-950: var(--color-rose-950);
+}
+
+:root {
+    /* Form Switch */
+    --form-switch-size: 1.125rem;
+    --form-switch-padding: 0.125rem;
+}
+
+/* --- Base Overrides --- */
+@layer base {
+    html {
+        @apply font-body h-full text-brand-text-light dark:text-brand-text-dark bg-brand-bg-light dark:bg-brand-bg-dark scroll-smooth;
+    }
+
+    body {
+        @apply flex h-full;
+    }
+
+    /* Turbo progress bar */
+    .turbo-progress-bar {
+        background-color: var(--color-accent);
+        height: 2px;
+    }
+}
+
+/* --- Component Classes --- */
+@layer components {
+    .btn {
+        @apply relative inline-flex justify-center whitespace-nowrap max-w-full cursor-pointer items-center rounded-lg font-medium px-4 py-2 disabled:cursor-default disabled:pointer-events-none disabled:opacity-70 dark:disabled:opacity-50;
+    }
+
+    .btn-default {
+        @apply text-gray-900 bg-white dark:text-white dark:bg-white/10 ring-inset ring-1 dark:ring-0 ring-gray-300 shadow-sm;
+
+        &:hover {
+            @apply bg-gray-50 dark:bg-white/15;
+        }
+
+        &:disabled:hover {
+            @apply bg-gray-50 dark:bg-gray-500/40;
+        }
+    }
+
+    .btn-brand {
+        @apply ring-0 text-white bg-brand-600 dark:bg-brand-500;
+
+        &:hover {
+            @apply bg-brand-500 dark:bg-brand-400;
+        }
+    }
+
+    .btn-primary {
+        @apply ring-0 text-white bg-blue-600 dark:bg-blue-500;
+
+        &:hover {
+            @apply bg-blue-500 dark:bg-blue-400;
+        }
+    }
+
+    .btn-danger {
+        @apply ring-0 text-white bg-rose-600 dark:bg-rose-500;
+
+        &:hover {
+            @apply bg-rose-500 dark:bg-rose-400;
+        }
+    }
+
+    .btn-info {
+        @apply ring-0 text-white bg-sky-600 dark:bg-sky-500;
+
+        &:hover {
+            @apply bg-sky-500 dark:bg-sky-400;
+        }
+    }
+
+    .btn-success {
+        @apply ring-0 text-white bg-emerald-600 dark:bg-emerald-500;
+
+        &:hover {
+            @apply bg-emerald-500 dark:bg-emerald-400;
+        }
+    }
+
+    .btn-secondary {
+        @apply ring-0 text-white bg-gray-600 dark:bg-gray-500;
+
+        &:hover {
+            @apply bg-gray-500 dark:bg-gray-400;
+        }
+    }
+
+    .form-input {
+        @apply block w-full min-h-6 rounded-lg border-0 py-2 px-3;
+        @apply shadow-xs ring-1 ring-inset ring-gray-300;
+        @apply placeholder:text-gray-400;
+        @apply focus:ring-2 focus:ring-inset focus:ring-brand-500 focus:outline-none;
+        @apply dark:focus:ring-brand-400 dark:ring-gray-500 dark:bg-white/10;
+    }
+
+    select.form-input {
+        @apply appearance-none pr-10;
+        /* Use your existing form-input styles */
+
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='oklch(55.1%25 0.027 264.364)' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+    }
+
+    select.form-input option {
+        @apply dark:bg-brand-bg-dark dark:text-brand-text-dark;
+    }
+
+    .form-checkbox,
+    .form-radio {
+        @apply h-4 w-4 rounded shadow-xs border-gray-300 text-brand-500 appearance-none inline-block align-middle select-none shrink-0 border bg-white;
+        @apply focus:outline-offset-0 focus:outline-4 focus:outline-brand-200;
+        @apply checked:bg-current checked:border-transparent checked:bg-center checked:bg-no-repeat checked:bg-size-[100%_100%];
+        @apply disabled:cursor-not-allowed;
+        @apply dark:text-brand-400 dark:border-gray-500 dark:bg-white/10;
+    }
+
+    .form-checkbox {
+        @apply rounded;
+        @apply indeterminate:bg-current indeterminate:border-transparent;
+
+        &:checked {
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+        }
+
+        &:indeterminate {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 16'%3e%3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 8h8'/%3e%3c/svg%3e");
+        }
+    }
+
+    .form-radio {
+        @apply rounded-full;
+
+        &:checked {
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
+        }
+    }
+
+    .form-switch[type=checkbox] {
+        padding: var(--form-switch-padding);
+        width: calc(var(--form-switch-size) * 2);
+        height: var(--form-switch-size);
+
+        @apply appearance-none inline-flex outline-none items-center border-0 rounded-full bg-gray-200;
+        @apply before:bg-white before:rounded-full before:shadow-sm before:transition-all before:duration-300;
+        @apply focus:ring-4 focus:ring-offset-0 focus:ring-brand-200;
+        @apply checked:bg-none checked:bg-brand-500;
+        @apply disabled:cursor-not-allowed;
+        @apply dark:bg-white/15 dark:checked:bg-brand-400 dark:focus:ring-brand-300/40;
+
+        &::before {
+            width: calc(50% - var(--form-switch-padding));
+            height: 100%;
+        }
+
+        &:checked::before {
+            translate: calc(100% + calc(var(--form-switch-padding) * 2)) 0;
+        }
+    }
+
+    .form-label {
+        @apply flex items-center gap-2;
+
+        &:has(.form-checkbox:disabled),
+        &:has(.form-radio:disabled),
+        &:has(.form-switch[type=checkbox]:disabled) {
+            @apply cursor-not-allowed opacity-50;
+        }
+    }
+
+    /* Turbo Frame loading state */
+    turbo-frame[busy] {
+        opacity: 0.6;
+        pointer-events: none;
+        transition: opacity 300ms;
+    }
+}
+
+/* --- Utilities --- */
+@utility highlight-* {
+    --tw-shadow-color: --value(--color-*);
+    box-shadow: inset 0 1px 0 0 var(--tw-shadow-color);
+}

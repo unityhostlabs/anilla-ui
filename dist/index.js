@@ -1228,10 +1228,13 @@ var DataStorage = class {
 //#endregion
 //#region src/components/Theme.js
 /**
+* @typedef {'light' | 'dark' | 'auto'} ThemeMode
+*/
+/**
 * @typedef {Object} ThemeOptions
 * @property {HTMLElement | string} trigger The element or selector that triggers the theme change.
 * @property {HTMLElement | string} parent The parent element or selector to apply the theme class to.
-* @property {string} [mode] The theme mode to set (e.g. 'light', 'dark', 'system'). If undefined and there is a value attribute on the trigger element, its value will be used or fallback on the defaultMode.
+* @property {ThemeMode} [mode] The theme mode to set (e.g. 'light', 'dark', 'system'). If undefined and there is a value attribute on the trigger element, its value will be used or fallback on the defaultMode.
 * @property {boolean} [toggle] If true, the theme mode will toggled between light and dark.
 * @property {string} autoModeName The name of the auto mode.
 * @property {string} attributeName The data attribute name to store the current theme mode.
@@ -1245,7 +1248,7 @@ const defaults = {
 	parent: document.documentElement,
 	mode: void 0,
 	toggle: false,
-	autoModeName: "system",
+	autoModeName: "auto",
 	attributeName: "data-theme",
 	modeAttributeName: "data-mode",
 	storageKey: "theme",
@@ -1265,68 +1268,77 @@ var Theme = class extends BaseComponent {
 	static get defaults() {
 		return defaults;
 	}
+	/** @private */
 	#storage = new DataStorage({ jsonEncode: false });
+	/** @private */
+	#modes = {
+		light: "light",
+		dark: "dark",
+		auto: "auto"
+	};
+	/**
+	* Constructor
+	* 
+	* @param {string|Element} target CSS selector string or DOM Element.
+	* @param {ThemeOptions} [options]
+	*/
 	constructor(target, options = {}) {
 		super(target, options);
-		this._init();
+		this.#init();
 	}
-	_init() {
-		this._modes = {
-			light: "light",
-			dark: "dark",
-			auto: this.options.autoModeName
-		};
+	#init() {
+		this.#modes.auto = this.options.autoModeName;
 		this.options.parent = query(this.options.parent);
 		const _onTrigger = (e) => {
 			e.preventDefault();
 			e.stopPropagation();
 			const trigger = e.target;
-			const mode = this._getMode(trigger);
+			const mode = this.#getMode(trigger);
 			this.change(mode);
 		};
-		this._getTriggers().forEach((trigger) => {
-			if (this._isClickable(trigger)) this.addListener(trigger, "click", _onTrigger);
-			if (this._isChangeable(trigger)) this.addListener(trigger, "change", _onTrigger);
+		this.#getTriggers().forEach((trigger) => {
+			if (this.#isClickable(trigger)) this.addListener(trigger, "click", _onTrigger);
+			if (this.#isChangeable(trigger)) this.addListener(trigger, "change", _onTrigger);
 		});
 		this.addListener(window.matchMedia("(prefers-color-scheme: dark)"), "change", (e) => {
-			if (this._getTheme() === this._modes.auto) if (e.matches) addClasses(this.options.parent, this.options.className);
+			if (this.#getTheme() === this.#modes.auto) if (e.matches) addClasses(this.options.parent, this.options.className);
 			else removeClasses(this.options.parent, this.options.className);
 		});
 		this.addListener(window, "storage", (e) => {
 			if (this.options.storageKey === e.key) {
 				const mode = JSON.parse(e.newValue);
-				this.change(mode || this._modes.auto);
+				this.change(mode || this.#modes.auto);
 			}
 		});
-		setAttributes(this.options.parent, { [this.options.attributeName]: this._getTheme() });
+		setAttributes(this.options.parent, { [this.options.attributeName]: this.#getTheme() });
 		const isDarkPreferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
-		if (this._getTheme() === this._modes.auto && isDarkPreferred || this._getTheme() === this._modes.dark) addClasses(this.options.parent, this.options.className);
-		this._updateTriggerState(this._getTheme());
+		if (this.#getTheme() === this.#modes.auto && isDarkPreferred || this.#getTheme() === this.#modes.dark) addClasses(this.options.parent, this.options.className);
+		this.#updateTriggerState(this.#getTheme());
 	}
-	_getTriggers() {
+	#getTriggers() {
 		return queryAll(this.options.trigger);
 	}
 	/** @returns {string} */
-	_getTheme() {
-		return this.#storage.get("theme", this._modes.auto);
+	#getTheme() {
+		return this.#storage.get("theme", this.#modes.auto);
 	}
 	/**
-	* Determine the theme mode from an element.
+	* Determine the theme mode from an element's value or data attribute.
 	* 
 	* @param {HTMLElement} el
 	* @returns {string}
 	*/
-	_getMode(el) {
-		if (el.type === "checkbox") return el.checked ? this._modes.dark : this._modes.light;
-		if (this._isClickable(el) && !hasAttribute(el, this.options.modeAttributeName)) return !hasAttribute(el, "aria-pressed") || getAttribute(el, "aria-pressed") !== "true" ? this._modes.dark : this._modes.light;
+	#getMode(el) {
+		if (el.type === "checkbox") return el.checked ? this.#modes.dark : this.#modes.light;
+		if (this.#isClickable(el) && !hasAttribute(el, this.options.modeAttributeName)) return !hasAttribute(el, "aria-pressed") || getAttribute(el, "aria-pressed") !== "true" ? this.#modes.dark : this.#modes.light;
 		const mode = !isEmpty(el.value) ? el.value : getAttribute(el, this.options.modeAttributeName);
-		return objectHasValue(this._modes, mode) ? mode : this._modes.auto;
+		return objectHasValue(this.#modes, mode) ? mode : this.#modes.auto;
 	}
 	/** 
 	* @param {HTMLElement} el 
 	* @returns {boolean}
 	*/
-	_isChangeable(el) {
+	#isChangeable(el) {
 		return [
 			"select-one",
 			"radio",
@@ -1337,72 +1349,69 @@ var Theme = class extends BaseComponent {
 	* @param {HTMLElement} el 
 	* @returns {boolean}
 	*/
-	_isClickable(el) {
+	#isClickable(el) {
 		return ["button", "a"].includes(el.localName);
 	}
 	/** 
 	* @param {HTMLElement} el 
 	* @returns {boolean}
 	*/
-	_isToggleable(el) {
-		return el.type === "checkbox" || this._isClickable(el) && !hasAttribute(el, this.options.modeAttributeName);
+	#isToggleable(el) {
+		return el.type === "checkbox" || this.#isClickable(el) && !hasAttribute(el, this.options.modeAttributeName);
 	}
-	_updateClickableStateAttributes(el, mode) {
-		setAttributes(el, {
-			ariaPressed: mode === this._modes.dark,
-			ariaCurrent: mode === this._modes.dark
-		});
-	}
-	_updateTriggerState(mode) {
-		this._getTriggers().forEach((trigger) => {
-			if (trigger.type === "checkbox") trigger.checked = mode === this._modes.dark;
-			if (trigger.type === "radio") trigger.checked = mode === this._getMode(trigger);
+	#updateTriggerState(mode) {
+		this.#getTriggers().forEach((trigger) => {
+			if (trigger.type === "checkbox") trigger.checked = mode === this.#modes.dark;
+			if (trigger.type === "radio") trigger.checked = mode === this.#getMode(trigger);
 			if (trigger.type === "select-one") trigger.value = mode;
-			if (this._isClickable(trigger) && hasAttribute(trigger, this.options.modeAttributeName)) {
-				const triggerMode = this._getMode(trigger);
+			if (this.#isClickable(trigger) && hasAttribute(trigger, this.options.modeAttributeName)) {
+				const triggerMode = this.#getMode(trigger);
 				setAttributes(trigger, {
 					ariaPressed: triggerMode === mode,
 					ariaCurrent: triggerMode === mode
 				});
 			}
-			if (this._isClickable(trigger) && this._isToggleable(trigger)) setAttributes(trigger, {
-				ariaPressed: mode === this._modes.dark,
-				ariaCurrent: mode === this._modes.dark
+			if (this.#isClickable(trigger) && this.#isToggleable(trigger)) setAttributes(trigger, {
+				ariaPressed: mode === this.#modes.dark,
+				ariaCurrent: mode === this.#modes.dark
 			});
 		});
-	}
-	/** @returns {string} */
-	get theme() {
-		return this._theme;
 	}
 	/**
 	* Change the theme mode and update DOM accordingly.
 	* 
-	* @param {string} mode
+	* @param {ThemeMode} mode
 	*/
 	change(mode) {
 		const isDarkPreferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
-		const shouldAddDarkClass = mode === this._modes.dark || mode === this._modes.auto && isDarkPreferred;
-		if (mode === this._modes.auto) this.#storage.remove(this.options.storageKey);
+		const shouldAddDarkClass = mode === this.#modes.dark || mode === this.#modes.auto && isDarkPreferred;
+		if (mode === this.#modes.auto) this.#storage.remove(this.options.storageKey);
 		else this.#storage.set(this.options.storageKey, mode);
 		if (shouldAddDarkClass) addClasses(this.options.parent, this.options.className);
 		else removeClasses(this.options.parent, this.options.className);
 		setAttributes(this.options.parent, { [this.options.attributeName]: mode });
-		this._updateTriggerState(mode);
+		this.#updateTriggerState(mode);
 		this.emit("change", this);
 	}
 	destroy() {
 		this.#storage.remove(this.options.storageKey);
 		removeClasses(this.options.parent, this.options.className);
 		removeAttributes(this.options.parent, [this.options.attributeName]);
-		this._getTriggers().forEach((trigger) => {
-			if (this._isClickable(trigger)) removeAttributes(trigger, ["aria-pressed", "aria-current"]);
-			if (this._isChangeable(trigger)) {
+		this.#getTriggers().forEach((trigger) => {
+			if (this.#isClickable(trigger)) removeAttributes(trigger, ["aria-pressed", "aria-current"]);
+			if (this.#isChangeable(trigger)) {
 				if (trigger.type === "select-one") trigger.selectedIndex = 0;
 				if (trigger.type === "radio" || trigger.type === "checkbox") trigger.checked = false;
 			}
 		});
 		super.destroy();
+	}
+	/** @returns {string} */
+	get theme() {
+		return this.#getTheme();
+	}
+	get modes() {
+		return this.#modes;
 	}
 };
 //#endregion
