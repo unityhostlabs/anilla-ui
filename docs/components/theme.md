@@ -6,7 +6,7 @@ This page demonstrates some of the built-in markdown extensions provided by Vite
 
 This page demonstrates some of the built-in markdown extensions provided by VitePress.
 
-<iframe src="/demos/theme/radio-input.html" width="100%" loading="lazy" scrolling="no"></iframe>
+<iframe src="/demos/theme/radio-input" width="100%" loading="lazy" scrolling="no"></iframe>
 
 ```js
 import { Theme } from '@anilla/ui';

@@ -20,10 +20,10 @@
   "scripts": {
     "rolldown:build": "rolldown -c rolldown.config.js",
     "rolldown:dev": "rolldown -c rolldown.config.js --watch",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs",
-    "build:css": "npx @tailwindcss/cli -i ./docs/.vitepress/theme/tailwind.css -o ./docs/public/demos.css --watch",
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview",
+    "build:css": "npx @tailwindcss/cli -i ./.vitepress/theme/tailwind.css -o ./docs/public/demos.css --watch",
     "dev": "concurrently \"npm run build:css\" \"npm run docs:dev\""
   },
   "devDependencies": {
