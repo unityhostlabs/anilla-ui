@@ -1,6 +1,34 @@
 import { defineConfig } from 'vitepress';
 import tailwindcss from '@tailwindcss/vite';
+import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SRC_DIR = path.resolve(__dirname, '../src');
+
+function serveLibPlugin() {
+    return {
+        name: 'serve-lib',
+        configureServer(server) {
+            server.middlewares.use('/src', (req, res, next) => {
+                const filePath = path.join(SRC_DIR, req.url.replace(/^\//, ''));
+                if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+                    const ext = path.extname(filePath);
+                    const mime = ext === '.js' 
+                        ? 'application/javascript' 
+                        : ext === '.css' 
+                        ? 'text/css' 
+                        : 'application/octet-stream';
+                    res.setHeader('Content-Type', mime);
+                    res.end(fs.readFileSync(filePath));
+                } else {
+                    next();
+                }
+            });
+        }
+    };
+}
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -17,18 +45,17 @@ export default defineConfig({
 
     vite: {
         server: {
-            fs: {
-                // Allows Vite to serve files from your library root and dist
-                allow: ['..']
+            fs: { allow: ['..'] }
+        },
+        resolve: {
+            alias: {
+                '@anilla/ui': path.resolve(SRC_DIR, 'index.js') // for Vue/MD files
             }
         },
-        // resolve: {
-        //     alias: {
-        //         // This maps the keyword '@dist' to your actual dist folder
-        //         '@dist': path.resolve(__dirname, '../dist')
-        //     }
-        // },
-        plugins: [tailwindcss()]
+        plugins: [
+            tailwindcss(),
+            serveLibPlugin() // for iframe HTML files
+        ]
     },
 
     // This removes .html from URLs

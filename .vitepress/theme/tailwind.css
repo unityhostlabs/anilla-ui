@@ -43,11 +43,11 @@
 /* --- Base Overrides --- */
 @layer base {
     html {
-        @apply font-body h-full text-brand-text-light dark:text-brand-text-dark bg-brand-bg-light dark:bg-brand-bg-dark scroll-smooth;
+        @apply font-body h-auto text-brand-text-light dark:text-brand-text-dark bg-brand-bg-light dark:bg-brand-bg-dark scroll-smooth;
     }
 
     body {
-        @apply flex h-full;
+        @apply h-auto min-h-40 m-0 flex flex-col;
     }
 
     /* Turbo progress bar */

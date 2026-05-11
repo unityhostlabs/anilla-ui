@@ -255,6 +255,9 @@
   .inline-block {
     display: inline-block;
   }
+  .h-screen {
+    height: 100vh;
+  }
   .w-full {
     width: 100%;
   }
@@ -279,6 +282,9 @@
   .resize {
     resize: both;
   }
+  .flex-col {
+    flex-direction: column;
+  }
   .items-center {
     align-items: center;
   }
@@ -296,6 +302,9 @@
   .border {
     border-style: var(--tw-border-style);
     border-width: 1px;
+  }
+  .p-6 {
+    padding: calc(var(--spacing) * 6);
   }
   .font-bold {
     --tw-font-weight: var(--font-weight-bold);
@@ -373,7 +382,7 @@
 }
 @layer base {
   html {
-    height: 100%;
+    height: auto;
     scroll-behavior: smooth;
     background-color: var(--color-brand-bg-light);
     font-family: var(--font-body);
@@ -386,8 +395,11 @@
     }
   }
   body {
+    margin: calc(var(--spacing) * 0);
     display: flex;
-    height: 100%;
+    height: auto;
+    min-height: calc(var(--spacing) * 40);
+    flex-direction: column;
   }
   .turbo-progress-bar {
     background-color: var(--color-accent);

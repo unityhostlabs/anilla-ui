@@ -2,7 +2,10 @@
     "compilerOptions": {
         "module": "ESNext",
         "target": "ESNext",
-        "checkJs": false
+        "checkJs": false,
+        "paths": {
+            "@anilla/ui": ["./src/index.js"]
+        }
     },
     "include": [
         "src/**/*"

@@ -5,22 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../../demos.css">
     <script src="theme.js"></script>
+    <script src="../../iframe-resize.js"></script>
     <script type="module" src="scripts.js"></script>
 </head>
 <body>
-    <div class="flex items-center justify-center gap-6 w-full max-w-lg mx-auto">
-        <label class="form-label">
-            <input class="form-radio" type="radio" name="themeRadio" value="light" theme-trigger>
-            Light
-        </label>
-        <label class="form-label">
-            <input class="form-radio" type="radio" name="themeRadio" value="dark" theme-trigger>
-            Dark
-        </label>
-        <label class="form-label">
-            <input class="form-radio" type="radio" name="themeRadio" value="auto" theme-trigger>
-            Auto
-        </label>
+    <div class="flex flex-col justify-center h-screen p-6">
+        <div class="flex items-center justify-center gap-6 w-full max-w-lg mx-auto">
+            <label class="form-label">
+                <input class="form-radio" type="radio" name="themeRadio" value="light" theme-trigger>
+                Light
+            </label>
+            <label class="form-label">
+                <input class="form-radio" type="radio" name="themeRadio" value="dark" theme-trigger>
+                Dark
+            </label>
+            <label class="form-label">
+                <input class="form-radio" type="radio" name="themeRadio" value="auto" theme-trigger>
+                Auto
+            </label>
+        </div>
     </div>
 </body>
 </html>
