@@ -70,6 +70,12 @@ export default defineConfig({
     ],
 
     themeConfig: {
+        // This enables H2 and H3 in the right sidebar
+        outline: {
+            level: [2, 3],
+            label: 'On this page' // Optional: Customizes the header text
+        },
+
         // https://vitepress.dev/reference/default-theme-config
         logo: '/logo.svg',
 

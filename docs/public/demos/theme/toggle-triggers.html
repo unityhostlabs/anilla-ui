@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../demos.css">
+    <script src="theme.js"></script>
+    <script src="../../iframe-resize.js"></script>
+    <script type="module" src="scripts.js"></script>
+</head>
+<body>
+    <div class="flex flex-col justify-center h-screen p-6">
+        <div class="flex items-center justify-center gap-6 w-full max-w-lg mx-auto">
+            <label class="form-label">
+                <input class="form-switch" type="checkbox" role="switch" theme-trigger>
+                Toggle Mode
+            </label>
+            <button type="button" class="btn btn-success aria-pressed:inset-shadow-sm/70 group" theme-trigger>
+                <span class="group-aria-pressed:hidden pointer-events-none">Dark Mode</span>
+                <span class="hidden group-aria-pressed:inline pointer-events-none">Light Mode</span>
+            </button>
+        </div>
+    </div>
+</body>
+</html>

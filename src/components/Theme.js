@@ -120,7 +120,7 @@ export class Theme extends BaseComponent {
 
         this.addListener(window, 'storage', (e) => {
             if (this.options.storageKey === e.key) {
-                const mode = JSON.parse(e.newValue);
+                const mode = e.newValue;
                 this.change(mode || this.#modes.auto);
             }
         });

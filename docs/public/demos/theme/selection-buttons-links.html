@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../demos.css">
+    <script src="theme.js"></script>
+    <script src="../../iframe-resize.js"></script>
+    <script type="module" src="scripts.js"></script>
+</head>
+<body>
+    <div class="flex flex-col justify-center h-screen p-6">
+        <div class="flex items-center justify-center gap-6 w-full max-w-lg mx-auto">
+            <button type="button" class="btn btn-info aria-pressed:inset-shadow-sm/70" data-mode="light" theme-trigger>Light</button>
+            <button type="button" class="btn btn-brand aria-pressed:inset-shadow-sm/70" data-mode="dark" theme-trigger>Dark</button>
+            <a href="#" class="btn btn-default aria-pressed:inset-shadow-sm/70" data-mode="auto" theme-trigger>Auto</a>
+        </div>
+    </div>
+</body>
+</html>

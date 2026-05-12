@@ -1,0 +1,1 @@
+[CSS selector](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Selectors){target="_blank"}
