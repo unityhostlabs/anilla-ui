@@ -1,0 +1,1 @@
+Component options can be set via data attributes or JavaScript. An example of a data attribute option is `data-{component}-{option}="{value}"`. The `{component}` is the lowercase name of the component and `{option}` is the *“kebab-case”* version of an option name.

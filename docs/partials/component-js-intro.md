@@ -1,0 +1,1 @@
+You can initialize components and gain access to all its features such as methods, assessors, events etc. through JavaScript. Learn more about [JavaScript](/getting-started/javascript) usage to fully use this component.

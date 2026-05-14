@@ -8,7 +8,7 @@ The Theme component adds a class and data attribute to a parent element through 
 
 ## Usage
 
-To initialize the Theme component on a parent element through the use of data attributes, add `data-ui-theme="true"` to enable the component. Add `data-theme-trigger="{selector}"` Theme option to the same element, where `selector` is a valid <!--@include: @/partials/snippets/css-ref.md--> to reference supported trigger elements.
+To initialize the Theme component on a parent element through the use of data attributes, add `data-ui-theme="true"` to enable the component. Add `data-theme-trigger="{selector}"` Theme option to the same element, where `selector` is a valid <!--@include: @/partials/css-ref.md--> to reference supported trigger elements.
 
 ```html
 <html lang="en" data-ui-theme="enable" data-theme-trigger=".theme-trigger">
@@ -29,7 +29,7 @@ To initialize the Theme component on a parent element through the use of data at
 
 When using radio inputs as triggers, the component uses the `value` attributes to determine your preferred theme mode.
 
-<iframe src="/demos/theme/selection-radio-input.html" width="100%" height="150px" loading="lazy" scrolling="no"></iframe>
+<DemoBox src="/demos/theme/selection-radio-input.html"/>
 
 ```html
 <label>
@@ -50,7 +50,7 @@ When using radio inputs as triggers, the component uses the `value` attributes t
 
 The `value` attribute of the `<option>` tag of a single `<select>` input, is used by the component to determine your preferred theme mode.
 
-<iframe src="/demos/theme/selection-select-input.html" width="100%" height="150px" loading="lazy" scrolling="no"></iframe>
+<DemoBox src="/demos/theme/selection-select-input.html"/>
 
 ```html
 <select class="theme-trigger">
@@ -64,7 +64,7 @@ The `value` attribute of the `<option>` tag of a single `<select>` input, is use
 
 Multiple `<button>` and `<a>` tags can be used to setup choice selection triggers. To set the preferred theme mode on these elements, add `data-mode="{light|dark|auto}"` data attribute to the trigger element. A `<button>` or `<a>` tag can be styled based on the state of their `aria-pressed="{true|false}"` and `aria-current="{true|false}"` attributes.
 
-<iframe src="/demos/theme/selection-buttons-links.html" width="100%" height="150px" loading="lazy" scrolling="no"></iframe>
+<DemoBox src="/demos/theme/selection-buttons-links.html"/>
 
 ```html
 <button type="button" class="theme-trigger" data-mode="light">Light</button>
@@ -76,7 +76,7 @@ Multiple `<button>` and `<a>` tags can be used to setup choice selection trigger
 
 Checkboxes have only two states and are therefore considered toggle triggers. Single `<button>` or `<a>` tags without a `data-mode="{light|dark|auto}"` data attribute are also considered as toggles. Toggle triggers only have `light` and `dark` modes. The `dark` mode is enabled when `<input type="checkbox">` is `:checked` or a `<button>` or `<a>` is pressed.
 
-<iframe src="/demos/theme/toggle-triggers.html" width="100%" height="150px" loading="lazy" scrolling="no"></iframe>
+<DemoBox src="/demos/theme/toggle-triggers.html"/>
 
 ```html
 <label>
@@ -86,94 +86,184 @@ Checkboxes have only two states and are therefore considered toggle triggers. Si
 <button type="button" class="theme-trigger">Toggle Mode</button>
 ```
 
-## Syntax Highlighting
+## Light Theme Flash Fix
 
-VitePress provides Syntax Highlighting powered by [Shiki](https://github.com/shikijs/shiki), with additional features like line-highlighting:
+To fix the light theme flash before `dark` mode loads, you must apply the theme preference before the browser renders the page. Add the following JavaScript in between the `<head>` tag of your pages to apply the theme before the component loads. The `<html>` element or `document.documentElement` was used in this example. You can however change it to the parent element you apply the Theme component to.
 
-**Input**
+```html
+<script>
+    (function () {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-````md
-```js{4}
-export default {
-  data () {
-    return {
-      msg: 'Highlighted!'
-    }
-  }
-}
-```
-````
-
-**Output**
-
-```js{4}
-export default {
-  data () {
-    return {
-      msg: 'Highlighted!'
-    }
-  }
-}
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    })();
+</script>
 ```
 
-## Custom Containers
+## Component Options
 
-**Input**
+<!--@include: @/partials/options-intro.md-->
 
-```md
-::: info
-This is an info box.
-:::
-
-::: tip
-This is a tip.
-:::
-
-::: warning
-This is a warning.
-:::
-
-::: danger
-This is a dangerous warning.
-:::
-
-::: details
-This is a details block.
-:::
-```
-
-**Output**
-
-::: info
-This is an info box.
-:::
-
-::: tip
-This is a tip.
-:::
-
-::: warning
-This is a warning.
-:::
-
-::: danger
-This is a dangerous warning.
-:::
-
-::: details
-This is a details block.
-:::
+| Name | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `parent` | `HTMLElement`, `string` | `document.documentElement` | The parent element or selector to apply the theme class to. |
+| `trigger` | `HTMLElement`, `string` | `undefined` | The element or selector that triggers the theme change. |
+| `autoModeName` | `string` | `auto` | The name of the auto mode. You can change it to some else like 'system' or 'device'. Remember to update the `value` or `data-mode` attributes of your triggers. |
+| `attributeName` | `string` | `data-theme` | The data attribute name to store the current theme mode. |
+| `modeAttributeName` | `string` | `data-mode` | The data attribute name to store the current theme mode on the trigger element. |
+| `label` | `string` | `Switch to :mode theme` | The label template for the trigger element, where `:mode` will be replaced with the current mode. |
+| `storageKey` | `string` | `theme` | The key used to store the theme mode in localStorage. |
+| `className` | `string` | `dark` | The CSS class name for the dark theme. |
 
 ## JavaScript
 
-Check out the documentation for the [full list of markdown extensions](https://vitepress.dev/guide/markdown).
+<!--@include: @/partials/component-js-intro.md-->
 
 ### Initialization
 
-```js [JS]
+::: code-group
+
+```js [ESM]
 import { Theme } from '@anilla/ui';
 
-const theme = new Theme(element, { 
-    trigger: '[theme-trigger]'
+const theme = new Theme(element, options);
+```
+
+```js [UMD]
+const { Theme } = AnillaUI;
+
+const theme = new Theme(element, options);
+```
+
+```js [CommonJS]
+const { Theme } = require('@anilla/ui');
+
+const theme = new Theme(element, options);
+```
+
+:::
+
+<!--@include: @/partials/component-js-params.md-->
+
+### Methods 
+
+The following methods are available for this component:
+
+#### `change`
+
+```js
+theme.change(mode);
+```
+
+Changes the current theme to the set `mode`.
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `mode` | string | Your preferred mode. E.g. light, dark or auto |
+
+### Accessors 
+
+#### Static Accessors
+
+The following static accessors are available for this component:
+
+##### `componentName`
+
+<small>*Type:* `string` | *Access:* `read-only`</small>
+
+Returns the registered component name.
+
+```js
+import { Theme } from '@anilla/ui';
+
+console.log(Theme.componentName); // 'Theme'
+```
+
+##### `defaults`
+
+<small>*Type:* `object` | *Access:* `read-only`</small>
+
+Returns an `object` of the default component options.
+
+```js
+import { Theme } from '@anilla/ui';
+
+console.log(Theme.defaults); // {...}
+```
+
+#### Instance Accessors
+
+The following instance accessors are available for this component:
+
+##### `theme`
+
+<small>*Type:* `string` | *Access:* `read-only`</small>
+
+Returns the current or active theme.
+
+```js
+const theme = new Theme(element, options);
+console.log(theme.theme); // 'light', 'dark' or 'auto'
+```
+
+##### `modes`
+
+<small>*Type:* `object` | *Access:* `read-only`</small>
+
+Returns an `object` of allowed theme modes.
+
+```js
+const theme = new Theme(element, options);
+console.log(theme.modes); // {...}
+```
+
+### Events 
+
+You can listen for events with an internal or external approach. The internal listener uses the `on()` method of components, and the external approach uses JavaScript's `addEventListener()` method with a prefixed event name.
+
+##### `change`
+
+<small>*Parameters:* `instance: Theme`</small>
+
+Fired when the theme changes.
+
+#### Event Listeners
+
+```js
+const theme = new Theme(element, options);
+
+// Internal listener example
+theme.on('change', (instance) => {
+    console.log(instance);
+});
+
+// External listener example
+element.addEventListener('ui:change', (e) => {
+    console.log(e.detail.instance);
 });
 ```
+
+#### Callbacks
+
+You can invoke callbacks with event names by prefixing them with `on` followed by a capitalized name of the event like `onChange`. Event with parameters will be passed as function arguments.
+
+```js
+const theme = new Theme(element, {
+    ...,
+    onChange: (instance) => {
+        console.log(instance);
+    }
+});
+```
+
+## Accessibility
+
+The Theme component adheres to the following [Button WAI-ARIA design patterns](https://www.w3.org/WAI/ARIA/apg/patterns/button/) and automatically sets the appropriate WAI-ARIA roles, states and properties.
+
+- The button has `role="button"`. 
+- The button has an accessible label.
+- If the button is a toggle button, it has an `aria-pressed` state. When the button is toggled on, the value of this state is `true`, and when toggled off, the state is `false`.

@@ -104,6 +104,14 @@ export default defineConfig({
                         link: '/getting-started/introduction'
                     },
                     {
+                        text: 'Installation',
+                        link: '/getting-started/installation'
+                    },
+                    {
+                        text: 'JavaScript',
+                        link: '/getting-started/javascript'
+                    },
+                    {
                         text: 'Markdown Examples',
                         link: '/markdown-examples'
                     },

@@ -1,9 +1,13 @@
 /**
  * AutoInit
  *
- * Scans the DOM for elements that have a component enable attribute and
- * automatically initializes the matching component class with options read
- * from the element's data attributes.
+ * Scan within a root element (default: document) for component enable
+ * attributes and initialize matching descendant elements.
+ *
+ * Note:
+ * The root element itself is not evaluated — only its descendants.
+ * This is intentional to support container-based rescans such as
+ * dynamically injected DOM fragments.
  *
  * --- Enable Attribute
  * Each component is activated on an element with:
@@ -43,6 +47,7 @@
  */
 
 import { config, logger } from './config.js';
+import { coerceType } from './utils.js';
 
 /** @type {Map<string, typeof import('./BaseComponent.js').BaseComponent>} */
 const componentMap = new Map();
@@ -65,6 +70,7 @@ export const AutoInit = {
                 `AutoInit.register(): "${ComponentClass.name}" does not define a ` +
                 `static componentName — skipped.`
             );
+
             return;
         }
 
@@ -91,6 +97,7 @@ export const AutoInit = {
     init(root = document) {
         if (componentMap.size === 0) {
             logger.warn('AutoInit.init(): no components are registered. Call AutoInit.registerAll() first.');
+
             return [];
         }
 
@@ -100,12 +107,20 @@ export const AutoInit = {
         // multiple components on the same element are handled independently.
         for (const [slug, ComponentClass] of componentMap) {
             const enableAttr = `data-${config.dataPrefix}-${slug}`;
-            const elements = root.querySelectorAll(`[${enableAttr}="true"]`);
+            const elements = root.querySelectorAll(`[${enableAttr}]`);
 
             elements.forEach((el) => {
+                const activation = coerceType(
+                    el.getAttribute(enableAttr)
+                );
+
+                // Skip unless explicitly enabled
+                if (activation !== true) return;
+
                 // Skip if this specific component type is already initialized on el.
                 if (ComponentClass.getInstance(el)) {
                     logger.info(`AutoInit: <${ComponentClass.componentName}> already initialized — skipped`, el);
+
                     return;
                 }
 
@@ -125,6 +140,7 @@ export const AutoInit = {
         }
 
         logger.info(`AutoInit: scan complete — ${created.length} component(s) initialized`);
+
         return created;
     },
 
@@ -143,7 +159,13 @@ export const AutoInit = {
      * @param {string} nameOrSlug  e.g. 'Modal' or 'modal'
      */
     unregister(nameOrSlug) {
-        componentMap.delete(nameOrSlug.toLowerCase());
+        const removed = componentMap.delete(nameOrSlug.toLowerCase());
+
+        if (!removed) {
+            logger.warn(
+                `AutoInit.unregister(): "${nameOrSlug}" was not registered.`
+            );
+        }
     },
 };
 

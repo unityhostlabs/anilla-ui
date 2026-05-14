@@ -26,5 +26,55 @@ iframe {
     border-radius: 0.5rem;
     overflow: hidden;
     border: 1px solid var(--vp-c-gutter);
-    height: 160px;
+    height: auto;
+    width: 100%;
+}
+
+.resizable-container {
+  position: relative;
+  width: 100%;
+  min-width: 320px;
+  /* height: 400px; */
+  /* border: 1px solid var(--vp-c-border);
+  border-radius: 8px;
+  background: var(--vp-c-bg);
+  padding-right: 12px;
+  box-sizing: border-box; */
+}
+
+/* .js-resizable-container iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+} */
+
+/* The vertical drag bar handle strip */
+.resize-handle {
+  position: absolute;
+  top: 0;
+  right: -12px;
+  width: 12px;
+  height: 100%;
+  cursor: ew-resize; /* Changes cursor to left-right arrows */
+  display: flex;
+  align-items: center;
+  justify-content: end;
+}
+
+/* Simple visual anchor lines on the handle */
+.resize-handle::before {
+  content: " ";
+  color: var(--vp-c-text-3);
+  width: 6px;
+  height: 32px;
+  border-radius: 50px;
+  background-color: #99a1af;
+}
+
+
+@media (min-width: 960px) {
+    .vp-doc table {
+        display: table;
+        width: 100%;
+    }
 }

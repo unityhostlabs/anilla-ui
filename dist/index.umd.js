@@ -122,13 +122,264 @@
 		}
 	};
 	//#endregion
+	//#region src/core/utils.js
+	var utils_exports = /* @__PURE__ */ __exportAll({
+		addClasses: () => addClasses,
+		coerceType: () => coerceType,
+		getAttribute: () => getAttribute,
+		hasAttribute: () => hasAttribute,
+		interpolate: () => interpolate,
+		isEmpty: () => isEmpty,
+		objectHasValue: () => objectHasValue,
+		parseComponentDataAttributes: () => parseComponentDataAttributes,
+		query: () => query,
+		queryAll: () => queryAll,
+		removeAttributes: () => removeAttributes,
+		removeClasses: () => removeClasses,
+		setAttributes: () => setAttributes,
+		slug: () => slug,
+		toArray: () => toArray
+	});
+	/**
+	* Utilities
+	* 
+	* Reusable helper functions that can be used across multiple components or library.
+	*/
+	/**
+	* Convert a raw data attribute string into the most appropriate JS type.
+	* The browser always gives us strings from dataset — this restores intent.
+	*
+	*   "true"  / "false" → boolean
+	*   "42"    / "3.14"  → number  (only purely numeric strings)
+	*   "null"            → null
+	*   anything else     → string  (selectors, class names, etc.)
+	*
+	* @param {string} value
+	* @returns {boolean | number | null | string}
+	*/
+	function coerceType(value) {
+		if (value === "true") return true;
+		if (value === "false") return false;
+		if (value === "null") return null;
+		if (value !== "" && !isNaN(Number(value))) return Number(value);
+		return value;
+	}
+	/**
+	* Reads all `data-{componentSlug}-*` attributes off an element, converts them
+	* to camelCase option names via the browser's built-in dataset API, and
+	* validates each key against the component's declared defaults.
+	*
+	* Any attribute that does not correspond to a key in a component's `defaults` is silently
+	* discarded — this catches typos and unsupported attributes early.
+	*
+	* How the name conversion works:
+	*   The browser converts data attribute names to camelCase automatically.
+	*   `data-modal-active-class` → `el.dataset.modalActiveClass`
+	*   We then strip the component slug prefix and lowercase the first character:
+	*   "modalActiveClass" → strip "modal" → "ActiveClass" → "activeClass" ✓
+	*
+	* @param {Element}              el        The DOM element to read from
+	* @param {string}               slug      Lowercase component name, e.g. 'modal'
+	* @param {Record<string, any>}  defaults  The component's declared default options
+	* @returns {Record<string, any>}
+	*/
+	function parseComponentDataAttributes(el, slug, defaults) {
+		const options = {};
+		for (const [datasetKey, rawValue] of Object.entries(el.dataset)) {
+			if (!datasetKey.startsWith(slug)) continue;
+			const rest = datasetKey.slice(slug.length);
+			if (!rest) continue;
+			const optionName = rest.charAt(0).toLowerCase() + rest.slice(1);
+			if (!(optionName in defaults)) continue;
+			options[optionName] = coerceType(rawValue);
+		}
+		return options;
+	}
+	/**
+	* Replaces placeholders in a template string with provided values.
+	* 
+	* @param {string} template - The string containing placeholders.
+	* @param {Record<string, string|number>} [placeholders={}] - Key-value pairs to replace.
+	* @returns {string} The formatted string with placeholders replaced.
+	* 
+	* @example
+	* // Single replacement
+	* interpolate("Hello, :name!", { name: "Alex" }); // returns "Hello, Alex!"
+	* 
+	* @example
+	* // Multiple replacements
+	* interpolate("Item :id is :status", { id: 4, status: "active" }); // returns "Item 4 is active"
+	*/
+	function interpolate(template, placeholders = {}) {
+		return Object.keys(placeholders).reduce((result, token) => {
+			return result.replaceAll(`:${token}`, placeholders[token]);
+		}, template);
+	}
+	/**
+	* Split a space-separated class string and add each token.
+	* 
+	* @param {HTMLElement} el
+	* @param {string} classString
+	*/
+	function addClasses(el, classString) {
+		classString.trim().split(/\s+/).forEach((cls) => el.classList.add(cls));
+	}
+	/**
+	* Split a space-separated class string and remove each token.
+	* 
+	* @param {HTMLElement} el
+	* @param {string} classString
+	*/
+	function removeClasses(el, classString) {
+		classString.trim().split(/\s+/).forEach((cls) => el.classList.remove(cls));
+	}
+	/**
+	* Finds the first DOM element matching the selector or returns a direct element reference.
+	* 
+	* @template {keyof HTMLElementTagNameMap | string} K
+	* @param {K | HTMLElement} selectorOrElement - CSS selector (e.g. 'button', '.class', '#id') or a direct element reference
+	* @param {ParentNode} [context=document] - The root element to search within
+	* @returns {(K extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[K] : HTMLElement) | null}
+	*/
+	function query(selectorOrElement, context = document) {
+		if (selectorOrElement instanceof HTMLElement) return selectorOrElement;
+		return context.querySelector(selectorOrElement);
+	}
+	/**
+	* Finds DOM elements by selector or returns from element map.
+	* 
+	* @template {keyof HTMLElementTagNameMap | string} K
+	* @param {K | Map<string, HTMLElement>} selectorOrMap - CSS selector or Map of elements
+	* @param {ParentNode} [context=document] - The root element to search within
+	* @returns {Array<HTMLElement>}
+	*/
+	function queryAll(selectorOrMap, context = document) {
+		if (selectorOrMap instanceof Map) return Array.from(selectorOrMap.values());
+		return Array.from(context.querySelectorAll(selectorOrMap));
+	}
+	/**
+	* Converts a string to a URL-friendly slug
+	* 
+	* @param {string} value
+	* @returns {string}
+	*/
+	function slug(value) {
+		return value.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
+	}
+	/**
+	* Converts a comma-separated string into an array of trimmed values.
+	* If the input is already an array, it is returned as-is.
+	* 
+	* @param {string | Array} value
+	* @param {string} separator
+	* @returns {Array}
+	*/
+	function toArray(value, separator = ",") {
+		const arr = isString(value) ? value.split(separator).map((x) => x.trim()).filter((x) => x !== "") : value;
+		return arr instanceof Array ? arr : [];
+	}
+	/**
+	* Checks if a value is empty.
+	* 
+	* Empty values include: null, undefined, empty strings, empty arrays, and empty objects.
+	* 
+	* @param {any} value
+	* @returns {boolean}
+	*/
+	function isEmpty(value) {
+		return value === null || value === void 0 || typeof value === "string" && value.trim() === "" || value instanceof Array && value.length === 0 || value instanceof Object && Object.keys(value).length === 0;
+	}
+	/**
+	* Checks if an object has a specific value (including nested objects).
+	* 
+	* @param {Object} obj 
+	* @param {any} value 
+	* @returns {boolean}
+	*/
+	function objectHasValue(obj, value) {
+		for (let key in obj) {
+			if (obj[key] === value) return true;
+			if (typeof obj[key] === "object" && obj[key] !== null) {
+				if (objectHasValue(obj[key], value)) return true;
+			}
+		}
+		return false;
+	}
+	/**
+	* Check if an HTML element has a specific attribute.
+	* 
+	* @param {HTMLElement | null} element
+	* @param {string | null} name
+	* @returns {boolean}
+	* @example
+	* const el = document.getElementById('my-element');
+	* hasAttribute(el, 'disabled'); // true or false
+	* hasAttribute(el, 'data-id'); // true or false
+	*/
+	function hasAttribute(element, name) {
+		return !!element?.hasAttribute(name ?? "");
+	}
+	/**
+	* Get the value of a specific attribute from an HTML element.
+	* 
+	* @param {HTMLElement | null} element
+	* @param {string | null} name
+	* @returns {string | null}
+	* @example
+	* const el = document.getElementById('my-element');
+	* getAttribute(el, 'data-id'); // '123'
+	* getAttribute(el, 'disabled'); // '' or null
+	*/
+	function getAttribute(element, name) {
+		return element?.getAttribute(name ?? "") ?? null;
+	}
+	/**
+	* Set multiple attributes on an HTML element.
+	* 
+	* @param {HTMLElement | null} element
+	* @param {Record<string, any>} attributes
+	* @throws Will silently return if element is null/undefined or attributes is empty
+	* @example
+	* const el = document.getElementById('my-element');
+	* setAttributes(el, {
+	*   dataId: '123',
+	*   ariaLabel: 'My Label',
+	*   role: 'button'
+	* });
+	* // Results in: data-id="123" aria-label="My Label" role="button"
+	*/
+	function setAttributes(element, attributes) {
+		if (!element?.getAttributeNames) return;
+		const entries = Object.entries(attributes);
+		if (!entries.length) return;
+		for (const [key, value] of entries) element.setAttribute(key.replace(/([A-Z])/g, "-$1").toLowerCase(), value);
+	}
+	/**
+	* Remove multiple attributes from an HTML element.
+	* 
+	* @param {HTMLElement | null} element
+	* @param {string[] | null} attributes
+	* @example
+	* const el = document.getElementById('my-element');
+	* removeAttributes(el, ['dataId', 'ariaLabel', 'disabled']);
+	* // Removes: data-id, aria-label, disabled attributes
+	*/
+	function removeAttributes(element, attributes) {
+		if (!element?.removeAttribute || !attributes?.length) return;
+		for (const attribute of attributes) element.removeAttribute(attribute.replace(/([A-Z])/g, "-$1").toLowerCase());
+	}
+	//#endregion
 	//#region src/core/AutoInit.js
 	/**
 	* AutoInit
 	*
-	* Scans the DOM for elements that have a component enable attribute and
-	* automatically initializes the matching component class with options read
-	* from the element's data attributes.
+	* Scan within a root element (default: document) for component enable
+	* attributes and initialize matching descendant elements.
+	*
+	* Note:
+	* The root element itself is not evaluated — only its descendants.
+	* This is intentional to support container-based rescans such as
+	* dynamically injected DOM fragments.
 	*
 	* --- Enable Attribute
 	* Each component is activated on an element with:
@@ -189,7 +440,8 @@
 			const created = [];
 			for (const [slug, ComponentClass] of componentMap) {
 				const enableAttr = `data-${config.dataPrefix}-${slug}`;
-				root.querySelectorAll(`[${enableAttr}="true"]`).forEach((el) => {
+				root.querySelectorAll(`[${enableAttr}]`).forEach((el) => {
+					if (coerceType(el.getAttribute(enableAttr)) !== true) return;
 					if (ComponentClass.getInstance(el)) {
 						logger.info(`AutoInit: <${ComponentClass.componentName}> already initialized — skipped`, el);
 						return;
@@ -210,7 +462,7 @@
 			return [...componentMap.keys()];
 		},
 		unregister(nameOrSlug) {
-			componentMap.delete(nameOrSlug.toLowerCase());
+			if (!componentMap.delete(nameOrSlug.toLowerCase())) logger.warn(`AutoInit.unregister(): "${nameOrSlug}" was not registered.`);
 		}
 	};
 	/**
@@ -443,232 +695,6 @@
 		debug() {
 			return new Map(store);
 		}
-	};
-	//#endregion
-	//#region src/core/utils.js
-	var utils_exports = /* @__PURE__ */ __exportAll({
-		addClasses: () => addClasses,
-		coerceType: () => coerceType,
-		getAttribute: () => getAttribute,
-		hasAttribute: () => hasAttribute,
-		isEmpty: () => isEmpty,
-		objectHasValue: () => objectHasValue,
-		parseComponentDataAttributes: () => parseComponentDataAttributes,
-		query: () => query,
-		queryAll: () => queryAll,
-		removeAttributes: () => removeAttributes,
-		removeClasses: () => removeClasses,
-		setAttributes: () => setAttributes,
-		slug: () => slug,
-		toArray: () => toArray
-	});
-	/**
-	* Utilities
-	* 
-	* Reusable helper functions that can be used across multiple components or library.
-	*/
-	/**
-	* Convert a raw data attribute string into the most appropriate JS type.
-	* The browser always gives us strings from dataset — this restores intent.
-	*
-	*   "true"  / "false" → boolean
-	*   "42"    / "3.14"  → number  (only purely numeric strings)
-	*   "null"            → null
-	*   anything else     → string  (selectors, class names, etc.)
-	*
-	* @param {string} value
-	* @returns {boolean | number | null | string}
-	*/
-	function coerceType(value) {
-		if (value === "true") return true;
-		if (value === "false") return false;
-		if (value === "null") return null;
-		if (value !== "" && !isNaN(Number(value))) return Number(value);
-		return value;
-	}
-	/**
-	* Reads all `data-{componentSlug}-*` attributes off an element, converts them
-	* to camelCase option names via the browser's built-in dataset API, and
-	* validates each key against the component's declared defaults.
-	*
-	* Any attribute that does not correspond to a key in a component's `defaults` is silently
-	* discarded — this catches typos and unsupported attributes early.
-	*
-	* How the name conversion works:
-	*   The browser converts data attribute names to camelCase automatically.
-	*   `data-modal-active-class` → `el.dataset.modalActiveClass`
-	*   We then strip the component slug prefix and lowercase the first character:
-	*   "modalActiveClass" → strip "modal" → "ActiveClass" → "activeClass" ✓
-	*
-	* @param {Element}              el        The DOM element to read from
-	* @param {string}               slug      Lowercase component name, e.g. 'modal'
-	* @param {Record<string, any>}  defaults  The component's declared default options
-	* @returns {Record<string, any>}
-	*/
-	function parseComponentDataAttributes(el, slug, defaults) {
-		const options = {};
-		for (const [datasetKey, rawValue] of Object.entries(el.dataset)) {
-			if (!datasetKey.startsWith(slug)) continue;
-			const rest = datasetKey.slice(slug.length);
-			if (!rest) continue;
-			const optionName = rest.charAt(0).toLowerCase() + rest.slice(1);
-			if (!(optionName in defaults)) continue;
-			options[optionName] = coerceType(rawValue);
-		}
-		return options;
-	}
-	/**
-	* Split a space-separated class string and add each token.
-	* 
-	* @param {HTMLElement} el
-	* @param {string} classString
-	*/
-	const addClasses = (el, classString) => {
-		classString.trim().split(/\s+/).forEach((cls) => el.classList.add(cls));
-	};
-	/**
-	* Split a space-separated class string and remove each token.
-	* 
-	* @param {HTMLElement} el
-	* @param {string} classString
-	*/
-	const removeClasses = (el, classString) => {
-		classString.trim().split(/\s+/).forEach((cls) => el.classList.remove(cls));
-	};
-	/**
-	* Finds the first DOM element matching the selector or returns a direct element reference.
-	* 
-	* @template {keyof HTMLElementTagNameMap | string} K
-	* @param {K | HTMLElement} selectorOrElement - CSS selector (e.g. 'button', '.class', '#id') or a direct element reference
-	* @param {ParentNode} [context=document] - The root element to search within
-	* @returns {(K extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[K] : HTMLElement) | null}
-	*/
-	function query(selectorOrElement, context = document) {
-		if (selectorOrElement instanceof HTMLElement) return selectorOrElement;
-		return context.querySelector(selectorOrElement);
-	}
-	/**
-	* Finds DOM elements by selector or returns from element map.
-	* 
-	* @template {keyof HTMLElementTagNameMap | string} K
-	* @param {K | Map<string, HTMLElement>} selectorOrMap - CSS selector or Map of elements
-	* @param {ParentNode} [context=document] - The root element to search within
-	* @returns {Array<HTMLElement>}
-	*/
-	function queryAll(selectorOrMap, context = document) {
-		if (selectorOrMap instanceof Map) return Array.from(selectorOrMap.values());
-		return Array.from(context.querySelectorAll(selectorOrMap));
-	}
-	/**
-	* Converts a string to a URL-friendly slug
-	* 
-	* @param {string} value
-	* @returns {string}
-	*/
-	function slug(value) {
-		return value.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
-	}
-	/**
-	* Converts a comma-separated string into an array of trimmed values.
-	* If the input is already an array, it is returned as-is.
-	* 
-	* @param {string | Array} value
-	* @param {string} separator
-	* @returns {Array}
-	*/
-	function toArray(value, separator = ",") {
-		const arr = isString(value) ? value.split(separator).map((x) => x.trim()).filter((x) => x !== "") : value;
-		return arr instanceof Array ? arr : [];
-	}
-	/**
-	* Checks if a value is empty.
-	* 
-	* Empty values include: null, undefined, empty strings, empty arrays, and empty objects.
-	* 
-	* @param {any} value
-	* @returns {boolean}
-	*/
-	function isEmpty(value) {
-		return value === null || value === void 0 || typeof value === "string" && value.trim() === "" || value instanceof Array && value.length === 0 || value instanceof Object && Object.keys(value).length === 0;
-	}
-	/**
-	* Checks if an object has a specific value (including nested objects).
-	* 
-	* @param {Object} obj 
-	* @param {any} value 
-	* @returns {boolean}
-	*/
-	function objectHasValue(obj, value) {
-		for (let key in obj) {
-			if (obj[key] === value) return true;
-			if (typeof obj[key] === "object" && obj[key] !== null) {
-				if (objectHasValue(obj[key], value)) return true;
-			}
-		}
-		return false;
-	}
-	/**
-	* Check if an HTML element has a specific attribute.
-	* 
-	* @param {HTMLElement | null} element
-	* @param {string | null} name
-	* @returns {boolean}
-	* @example
-	* const el = document.getElementById('my-element');
-	* hasAttribute(el, 'disabled'); // true or false
-	* hasAttribute(el, 'data-id'); // true or false
-	*/
-	const hasAttribute = (element, name) => {
-		return !!element?.hasAttribute(name ?? "");
-	};
-	/**
-	* Get the value of a specific attribute from an HTML element.
-	* 
-	* @param {HTMLElement | null} element
-	* @param {string | null} name
-	* @returns {string | null}
-	* @example
-	* const el = document.getElementById('my-element');
-	* getAttribute(el, 'data-id'); // '123'
-	* getAttribute(el, 'disabled'); // '' or null
-	*/
-	const getAttribute = (element, name) => {
-		return element?.getAttribute(name ?? "") ?? null;
-	};
-	/**
-	* Set multiple attributes on an HTML element.
-	* 
-	* @param {HTMLElement | null} element
-	* @param {Record<string, any>} attributes
-	* @throws Will silently return if element is null/undefined or attributes is empty
-	* @example
-	* const el = document.getElementById('my-element');
-	* setAttributes(el, {
-	*   dataId: '123',
-	*   ariaLabel: 'My Label',
-	*   role: 'button'
-	* });
-	* // Results in: data-id="123" aria-label="My Label" role="button"
-	*/
-	const setAttributes = (element, attributes) => {
-		if (!element?.getAttributeNames) return;
-		const entries = Object.entries(attributes);
-		if (!entries.length) return;
-		for (const [key, value] of entries) element.setAttribute(key.replace(/([A-Z])/g, "-$1").toLowerCase(), value);
-	};
-	/**
-	* Remove multiple attributes from an HTML element.
-	* 
-	* @param {HTMLElement | null} element
-	* @param {string[] | null} attributes
-	* @example
-	* const el = document.getElementById('my-element');
-	* removeAttributes(el, ['dataId', 'ariaLabel', 'disabled']);
-	* // Removes: data-id, aria-label, disabled attributes
-	*/
-	const removeAttributes = (element, attributes) => {
-		if (!element?.removeAttribute || !attributes?.length) return;
-		for (const attribute of attributes) element.removeAttribute(attribute.replace(/([A-Z])/g, "-$1").toLowerCase());
 	};
 	//#endregion
 	//#region src/core/Transition.js
@@ -1167,13 +1193,22 @@
 			return `${this.options.prefix}${this.options.delimiter}${key}`;
 		}
 		/**
-		* Get the value to store, optionally JSON encoded.
+		* Set a JSON encoded value or return as-is.
 		* 
 		* @param {any} value 
 		* @returns {string}
 		*/
-		_getValue(value) {
+		_encode(value) {
 			return this.options.jsonEncode ? JSON.stringify(value) : value;
+		}
+		/**
+		* Get a JSON encoded value or return as-is.
+		* 
+		* @param {any} value 
+		* @returns {string}
+		*/
+		_decode(value) {
+			return this.options.jsonEncode ? JSON.parse(value) : value;
 		}
 		/**
 		* Check for existing key in storage.
@@ -1191,7 +1226,7 @@
 		* @param {any} value 
 		*/
 		set(key, value) {
-			this.storage.setItem(this._getKey(key), this._getValue(value));
+			this.storage.setItem(this._getKey(key), this._encode(value));
 		}
 		/**
 		* Get a value from storage.
@@ -1202,7 +1237,7 @@
 		*/
 		get(key, defaultValue = null) {
 			const item = this.storage.getItem(this._getKey(key));
-			return item ? this._getValue(item) : defaultValue;
+			return item ? this._decode(item) : defaultValue;
 		}
 		/**
 		* Remove one or more keys from storage.
@@ -1238,11 +1273,10 @@
 	* @typedef {Object} ThemeOptions
 	* @property {HTMLElement | string} trigger The element or selector that triggers the theme change.
 	* @property {HTMLElement | string} parent The parent element or selector to apply the theme class to.
-	* @property {ThemeMode} [mode] The theme mode to set (e.g. 'light', 'dark', 'system'). If undefined and there is a value attribute on the trigger element, its value will be used or fallback on the defaultMode.
-	* @property {boolean} [toggle] If true, the theme mode will toggled between light and dark.
 	* @property {string} autoModeName The name of the auto mode.
 	* @property {string} attributeName The data attribute name to store the current theme mode.
 	* @property {string} modeAttributeName The data attribute name to store the current theme mode on the trigger element.
+	* @property {string} label The label template for the trigger element, where :mode will be replaced with the current mode.
 	* @property {string} storageKey The key used to store the theme mode in localStorage.
 	* @property {string} className The CSS class name for the dark theme.
 	*/
@@ -1250,17 +1284,16 @@
 	const defaults = {
 		trigger: void 0,
 		parent: document.documentElement,
-		mode: void 0,
-		toggle: false,
 		autoModeName: "auto",
 		attributeName: "data-theme",
 		modeAttributeName: "data-mode",
+		label: "Switch to :mode theme",
 		storageKey: "theme",
 		className: "dark"
 	};
 	/**
 	* @typedef {Object} ThemeEvents
-	* @property {[Theme]} change Fired when the theme changes.
+	* @property {(instance: Theme) => void} change Fired when the theme changes.
 	*/
 	/**
 	* @extends {BaseComponent<ThemeEvents, typeof defaults>}
@@ -1310,11 +1343,15 @@
 			});
 			this.addListener(window, "storage", (e) => {
 				if (this.options.storageKey === e.key) {
-					const mode = JSON.parse(e.newValue);
+					const mode = e.newValue;
 					this.change(mode || this.#modes.auto);
 				}
 			});
 			setAttributes(this.options.parent, { [this.options.attributeName]: this.#getTheme() });
+			this.#getTriggers().forEach((trigger) => {
+				if (this.#isClickable(trigger)) setAttributes(trigger, { role: "button" });
+				if (this.#isClickable(trigger) || ["checkbox", "radio"].includes(trigger.type)) setAttributes(trigger, { ariaLabel: interpolate(this.options.label, { mode: this.#getMode(trigger) }) });
+			});
 			const isDarkPreferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
 			if (this.#getTheme() === this.#modes.auto && isDarkPreferred || this.#getTheme() === this.#modes.dark) addClasses(this.options.parent, this.options.className);
 			this.#updateTriggerState(this.#getTheme());
@@ -1324,7 +1361,7 @@
 		}
 		/** @returns {string} */
 		#getTheme() {
-			return this.#storage.get("theme", this.#modes.auto);
+			return this.#storage.get(this.options.storageKey, this.#modes.auto);
 		}
 		/**
 		* Determine the theme mode from an element's value or data attribute.
@@ -1368,17 +1405,9 @@
 				if (trigger.type === "checkbox") trigger.checked = mode === this.#modes.dark;
 				if (trigger.type === "radio") trigger.checked = mode === this.#getMode(trigger);
 				if (trigger.type === "select-one") trigger.value = mode;
-				if (this.#isClickable(trigger) && hasAttribute(trigger, this.options.modeAttributeName)) {
-					const triggerMode = this.#getMode(trigger);
-					setAttributes(trigger, {
-						ariaPressed: triggerMode === mode,
-						ariaCurrent: triggerMode === mode
-					});
-				}
-				if (this.#isClickable(trigger) && this.#isToggleable(trigger)) setAttributes(trigger, {
-					ariaPressed: mode === this.#modes.dark,
-					ariaCurrent: mode === this.#modes.dark
-				});
+				if (this.#isClickable(trigger) && hasAttribute(trigger, this.options.modeAttributeName)) setAttributes(trigger, { ariaPressed: this.#getMode(trigger) === mode });
+				if (this.#isClickable(trigger) && this.#isToggleable(trigger)) setAttributes(trigger, { ariaPressed: mode === this.#modes.dark });
+				if (this.#isToggleable(trigger)) setAttributes(trigger, { ariaLabel: interpolate(this.options.label, { mode: mode === this.#modes.dark ? this.#modes.light : this.#modes.dark }) });
 			});
 		}
 		/**
@@ -1402,7 +1431,7 @@
 			removeClasses(this.options.parent, this.options.className);
 			removeAttributes(this.options.parent, [this.options.attributeName]);
 			this.#getTriggers().forEach((trigger) => {
-				if (this.#isClickable(trigger)) removeAttributes(trigger, ["aria-pressed", "aria-current"]);
+				if (this.#isClickable(trigger)) removeAttributes(trigger, ["aria-pressed", "aria-label"]);
 				if (this.#isChangeable(trigger)) {
 					if (trigger.type === "select-one") trigger.selectedIndex = 0;
 					if (trigger.type === "radio" || trigger.type === "checkbox") trigger.checked = false;

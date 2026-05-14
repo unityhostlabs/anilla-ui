@@ -63,12 +63,33 @@ export function parseComponentDataAttributes(el, slug, defaults) {
 }
 
 /**
+ * Replaces placeholders in a template string with provided values.
+ * 
+ * @param {string} template - The string containing placeholders.
+ * @param {Record<string, string|number>} [placeholders={}] - Key-value pairs to replace.
+ * @returns {string} The formatted string with placeholders replaced.
+ * 
+ * @example
+ * // Single replacement
+ * interpolate("Hello, :name!", { name: "Alex" }); // returns "Hello, Alex!"
+ * 
+ * @example
+ * // Multiple replacements
+ * interpolate("Item :id is :status", { id: 4, status: "active" }); // returns "Item 4 is active"
+ */
+export function interpolate(template, placeholders = {}) {
+    return Object.keys(placeholders).reduce((result, token) => {
+        return result.replaceAll(`:${token}`, placeholders[token]);
+    }, template);
+}
+
+/**
  * Split a space-separated class string and add each token.
  * 
  * @param {HTMLElement} el
  * @param {string} classString
  */
-export const addClasses = (el, classString) => {
+export function addClasses(el, classString) {
 	classString.trim().split(/\s+/).forEach((cls) => el.classList.add(cls));
 }
 
@@ -78,7 +99,7 @@ export const addClasses = (el, classString) => {
  * @param {HTMLElement} el
  * @param {string} classString
  */
-export const removeClasses = (el, classString) => {
+export function removeClasses(el, classString) {
 	classString.trim().split(/\s+/).forEach((cls) => el.classList.remove(cls));
 }
 
@@ -186,9 +207,9 @@ export function objectHasValue(obj, value) {
  * hasAttribute(el, 'disabled'); // true or false
  * hasAttribute(el, 'data-id'); // true or false
  */
-export const hasAttribute = (element, name) => {
+export function hasAttribute(element, name) {
     return !!element?.hasAttribute(name ?? '');
-};
+}
 
 /**
  * Get the value of a specific attribute from an HTML element.
@@ -201,9 +222,9 @@ export const hasAttribute = (element, name) => {
  * getAttribute(el, 'data-id'); // '123'
  * getAttribute(el, 'disabled'); // '' or null
  */
-export const getAttribute = (element, name) => {
+export function getAttribute(element, name) {
     return element?.getAttribute(name ?? '') ?? null;
-};
+}
 
 /**
  * Set multiple attributes on an HTML element.
@@ -220,7 +241,7 @@ export const getAttribute = (element, name) => {
  * });
  * // Results in: data-id="123" aria-label="My Label" role="button"
  */
-export const setAttributes = (element, attributes) => {
+export function setAttributes(element, attributes) {
     if (!element?.getAttributeNames) return;
 
     const entries = Object.entries(attributes);
@@ -232,7 +253,7 @@ export const setAttributes = (element, attributes) => {
             value
         );
     }
-};
+}
 
 /**
  * Remove multiple attributes from an HTML element.
@@ -244,7 +265,7 @@ export const setAttributes = (element, attributes) => {
  * removeAttributes(el, ['dataId', 'ariaLabel', 'disabled']);
  * // Removes: data-id, aria-label, disabled attributes
  */
-export const removeAttributes = (element, attributes) => {
+export function removeAttributes(element, attributes) {
     if (!element?.removeAttribute || !attributes?.length) return;
 
     for (const attribute of attributes) {
@@ -252,4 +273,4 @@ export const removeAttributes = (element, attributes) => {
             attribute.replace(/([A-Z])/g, '-$1').toLowerCase()
         );
     }
-};
+}

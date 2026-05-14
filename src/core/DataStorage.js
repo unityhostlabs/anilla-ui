@@ -47,13 +47,23 @@ export class DataStorage {
     }
 
     /**
-     * Get the value to store, optionally JSON encoded.
+     * Set a JSON encoded value or return as-is.
      * 
      * @param {any} value 
      * @returns {string}
      */
-    _getValue(value) {
+    _encode(value) {
         return this.options.jsonEncode ? JSON.stringify(value) : value;
+    }
+
+    /**
+     * Get a JSON encoded value or return as-is.
+     * 
+     * @param {any} value 
+     * @returns {string}
+     */
+    _decode(value) {
+        return this.options.jsonEncode ? JSON.parse(value) : value;
     }
 
     // --- Public API
@@ -75,7 +85,7 @@ export class DataStorage {
      * @param {any} value 
      */
     set(key, value) {
-        this.storage.setItem(this._getKey(key), this._getValue(value));
+        this.storage.setItem(this._getKey(key), this._encode(value));
     }
 
     /**
@@ -88,7 +98,7 @@ export class DataStorage {
     get(key, defaultValue = null) {
         const item = this.storage.getItem(this._getKey(key));
 
-        return item ? this._getValue(item) : defaultValue;
+        return item ? this._decode(item) : defaultValue;
     }
 
     /**

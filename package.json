@@ -1,6 +1,6 @@
 {
   "name": "@anilla/ui",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "description": "A highly customizable and unopinionated UI components library, for faster web development.",
   "type": "module",
   "main": "dist/index.cjs",
@@ -24,7 +24,9 @@
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview",
     "build:css": "npx @tailwindcss/cli -i ./.vitepress/theme/tailwind.css -o ./docs/public/demos.css --watch",
-    "dev": "concurrently \"npm run build:css\" \"npm run docs:dev\""
+    "dev": "concurrently \"npm run rolldown:dev\" \"npm run build:css\" \"npm run docs:dev\"",
+    "prepublishOnly": "npm run rolldown:build",
+    "release:alpha": "node release-alpha.js"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.0",
@@ -73,5 +75,9 @@
     "breadcrumb",
     "card"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  }
 }

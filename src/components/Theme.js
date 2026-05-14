@@ -10,7 +10,8 @@ import {
     removeAttributes,
     hasAttribute,
     addClasses,
-    removeClasses
+    removeClasses,
+    interpolate
 } from '../core/utils.js';
 import { config, logger } from '../core/config.js';
 
@@ -22,11 +23,10 @@ import { config, logger } from '../core/config.js';
  * @typedef {Object} ThemeOptions
  * @property {HTMLElement | string} trigger The element or selector that triggers the theme change.
  * @property {HTMLElement | string} parent The parent element or selector to apply the theme class to.
- * @property {ThemeMode} [mode] The theme mode to set (e.g. 'light', 'dark', 'system'). If undefined and there is a value attribute on the trigger element, its value will be used or fallback on the defaultMode.
- * @property {boolean} [toggle] If true, the theme mode will toggled between light and dark.
  * @property {string} autoModeName The name of the auto mode.
  * @property {string} attributeName The data attribute name to store the current theme mode.
  * @property {string} modeAttributeName The data attribute name to store the current theme mode on the trigger element.
+ * @property {string} label The label template for the trigger element, where :mode will be replaced with the current mode.
  * @property {string} storageKey The key used to store the theme mode in localStorage.
  * @property {string} className The CSS class name for the dark theme.
  */
@@ -35,18 +35,17 @@ import { config, logger } from '../core/config.js';
 const defaults = {
     trigger: undefined,
     parent: document.documentElement,
-    mode: undefined,
-    toggle: false,
     autoModeName: 'auto',
     attributeName: 'data-theme',
     modeAttributeName: 'data-mode',
+    label: 'Switch to :mode theme',
     storageKey: 'theme',
     className: 'dark'
 };
 
 /**
  * @typedef {Object} ThemeEvents
- * @property {[Theme]} change Fired when the theme changes.
+ * @property {(instance: Theme) => void} change Fired when the theme changes.
  */
 
 /**
@@ -130,6 +129,22 @@ export class Theme extends BaseComponent {
             [this.options.attributeName]: this.#getTheme()
         });
 
+        this.#getTriggers().forEach(trigger => {
+            if (this.#isClickable(trigger)) {
+                setAttributes(trigger, {
+                    role: 'button',
+                });
+            }
+
+            if (this.#isClickable(trigger) || ['checkbox', 'radio'].includes(trigger.type)) {
+                setAttributes(trigger, {
+                    ariaLabel: interpolate(this.options.label, { 
+                        mode: this.#getMode(trigger)
+                    })
+                });
+            }
+        });
+
         // Set initial theme based on stored value or system preference
         const isDarkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
@@ -147,7 +162,7 @@ export class Theme extends BaseComponent {
 
     /** @returns {string} */
     #getTheme() {
-        return this.#storage.get('theme', this.#modes.auto);
+        return this.#storage.get(this.options.storageKey, this.#modes.auto);
     }
 
     /**
@@ -210,15 +225,21 @@ export class Theme extends BaseComponent {
                 const triggerMode = this.#getMode(trigger);
 
                 setAttributes(trigger, {
-                    ariaPressed: triggerMode === mode,
-                    ariaCurrent: triggerMode === mode
+                    ariaPressed: triggerMode === mode
                 });
             }
 
             if (this.#isClickable(trigger) && this.#isToggleable(trigger)) {
                 setAttributes(trigger, {
-                    ariaPressed: mode === this.#modes.dark,
-                    ariaCurrent: mode === this.#modes.dark
+                    ariaPressed: mode === this.#modes.dark
+                });
+            }
+
+            if (this.#isToggleable(trigger)) {
+                setAttributes(trigger, {
+                    ariaLabel: interpolate(this.options.label, { 
+                        mode: mode === this.#modes.dark ? this.#modes.light : this.#modes.dark
+                    })
                 });
             }
         });
@@ -267,7 +288,7 @@ export class Theme extends BaseComponent {
 
         this.#getTriggers().forEach(trigger => {
             if (this.#isClickable(trigger)) {
-                removeAttributes(trigger, ['aria-pressed', 'aria-current']);
+                removeAttributes(trigger, ['aria-pressed', 'aria-label']);
             }
 
             if (this.#isChangeable(trigger)) {
