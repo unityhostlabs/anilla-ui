@@ -57,12 +57,9 @@ export const Registry = {
         const key = makeKey(el, componentName);
 
         if (store.has(key)) {
-            logger.warn(
-                `Registry: <${componentName}> is already initialised on this element. ` +
-                `Call destroy() on the existing instance before re-initialising.`
+            throw new Error(
+                `${componentName} is already initialized on this element`
             );
-
-            return;
         }
 
         store.set(key, instance);

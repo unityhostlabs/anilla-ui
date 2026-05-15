@@ -27,6 +27,7 @@ import { config, logger } from '../core/config.js';
  * @property {string} attributeName The data attribute name to store the current theme mode.
  * @property {string} modeAttributeName The data attribute name to store the current theme mode on the trigger element.
  * @property {string} label The label template for the trigger element, where :mode will be replaced with the current mode.
+ * @property {boolean} showTitle Whether to show the title attribute on the trigger element.
  * @property {string} storageKey The key used to store the theme mode in localStorage.
  * @property {string} className The CSS class name for the dark theme.
  */
@@ -39,6 +40,7 @@ const defaults = {
     attributeName: 'data-theme',
     modeAttributeName: 'data-mode',
     label: 'Switch to :mode theme',
+    showTitle: false,
     storageKey: 'theme',
     className: 'dark'
 };
@@ -137,10 +139,10 @@ export class Theme extends BaseComponent {
             }
 
             if (this.#isClickable(trigger) || ['checkbox', 'radio'].includes(trigger.type)) {
+                const label = interpolate(this.options.label, { mode: this.#getMode(trigger) });
                 setAttributes(trigger, {
-                    ariaLabel: interpolate(this.options.label, { 
-                        mode: this.#getMode(trigger)
-                    })
+                    ariaLabel: label,
+                    title: { condition: this.options.showTitle, value: label }
                 });
             }
         });
@@ -236,10 +238,12 @@ export class Theme extends BaseComponent {
             }
 
             if (this.#isToggleable(trigger)) {
-                setAttributes(trigger, {
-                    ariaLabel: interpolate(this.options.label, { 
+                const label = interpolate(this.options.label, { 
                         mode: mode === this.#modes.dark ? this.#modes.light : this.#modes.dark
-                    })
+                    });
+                setAttributes(trigger, {
+                    ariaLabel: label,
+                    title: { condition: this.options.showTitle, value: label }
                 });
             }
         });

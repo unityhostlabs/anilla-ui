@@ -1,7 +1,8 @@
-import { Theme } from '../../src/index.js';
+import { Theme, Registry } from '../../src/index.js';
 
 const theme = new Theme('html', {
-    trigger: '[theme-trigger]'
+    trigger: '[theme-trigger]',
+    showTitle: false
 });
 
 // theme.on('change', (instance) => console.log(instance));

@@ -241,6 +241,57 @@ export function getAttribute(element, name) {
  * });
  * // Results in: data-id="123" aria-label="My Label" role="button"
  */
+// export function setAttributes(element, attributes) {
+//     if (!element?.getAttributeNames) return;
+
+//     const entries = Object.entries(attributes);
+//     if (!entries.length) return;
+
+//     for (const [key, value] of entries) {
+//         element.setAttribute(
+//             key.replace(/([A-Z])/g, '-$1').toLowerCase(),
+//             value
+//         );
+//     }
+// }
+
+/**
+ * Sets attributes on a DOM element, with support for conditional attribute setting.
+ * 
+ * Converts camelCase attribute names to kebab-case (e.g., dataId -> data-id).
+ * 
+ * @param {Object.<string, *|{condition: boolean, value: *}>} attributes - Key-value pairs of attributes to set. 
+ * Values can be direct or objects with a condition. If an object has a falsy condition, the attribute will be skipped.
+ * 
+ * @example
+ * // Basic usage - always sets attributes
+ * const button = document.querySelector('button');
+ * setAttributes(button, {
+ *     dataId: '123',
+ *     ariaLabel: 'Close button'
+ * });
+ * // Result: data-id="123" aria-label="Close button"
+ * 
+ * @example
+ * // With conditional attributes
+ * const isDisabled = true;
+ * const hasError = false;
+ * 
+ * setAttributes(button, {
+ *     dataId: '123',
+ *     disabled: { condition: isDisabled, value: '' },
+ *     ariaInvalid: { condition: hasError, value: 'true' }
+ * });
+ * // Result: data-id="123" disabled (aria-invalid not set because hasError is false)
+ * 
+ * @example
+ * // Mixed conditional and unconditional
+ * setAttributes(element, {
+ *     id: 'my-element',
+ *     dataCount: { condition: showCount, value: itemCount.toString() },
+ *     role: 'button'
+ * });
+ */
 export function setAttributes(element, attributes) {
     if (!element?.getAttributeNames) return;
 
@@ -248,10 +299,21 @@ export function setAttributes(element, attributes) {
     if (!entries.length) return;
 
     for (const [key, value] of entries) {
-        element.setAttribute(
-            key.replace(/([A-Z])/g, '-$1').toLowerCase(),
-            value
-        );
+        // Check if value is an object with a condition property
+        if (typeof value === 'object' && value !== null && 'condition' in value) {
+            if (!value.condition) continue; // Skip if condition is falsy
+            const actualValue = value.value ?? '';
+            element.setAttribute(
+                key.replace(/([A-Z])/g, '-$1').toLowerCase(),
+                actualValue
+            );
+        } else {
+            // Set attribute normally if no condition
+            element.setAttribute(
+                key.replace(/([A-Z])/g, '-$1').toLowerCase(),
+                value
+            );
+        }
     }
 }
 

@@ -345,11 +345,52 @@ function getAttribute(element, name) {
 * });
 * // Results in: data-id="123" aria-label="My Label" role="button"
 */
+/**
+* Sets attributes on a DOM element, with support for conditional attribute setting.
+* 
+* Converts camelCase attribute names to kebab-case (e.g., dataId -> data-id).
+* 
+* @param {Object.<string, *|{condition: boolean, value: *}>} attributes - Key-value pairs of attributes to set. 
+* Values can be direct or objects with a condition. If an object has a falsy condition, the attribute will be skipped.
+* 
+* @example
+* // Basic usage - always sets attributes
+* const button = document.querySelector('button');
+* setAttributes(button, {
+*     dataId: '123',
+*     ariaLabel: 'Close button'
+* });
+* // Result: data-id="123" aria-label="Close button"
+* 
+* @example
+* // With conditional attributes
+* const isDisabled = true;
+* const hasError = false;
+* 
+* setAttributes(button, {
+*     dataId: '123',
+*     disabled: { condition: isDisabled, value: '' },
+*     ariaInvalid: { condition: hasError, value: 'true' }
+* });
+* // Result: data-id="123" disabled (aria-invalid not set because hasError is false)
+* 
+* @example
+* // Mixed conditional and unconditional
+* setAttributes(element, {
+*     id: 'my-element',
+*     dataCount: { condition: showCount, value: itemCount.toString() },
+*     role: 'button'
+* });
+*/
 function setAttributes(element, attributes) {
 	if (!element?.getAttributeNames) return;
 	const entries = Object.entries(attributes);
 	if (!entries.length) return;
-	for (const [key, value] of entries) element.setAttribute(key.replace(/([A-Z])/g, "-$1").toLowerCase(), value);
+	for (const [key, value] of entries) if (typeof value === "object" && value !== null && "condition" in value) {
+		if (!value.condition) continue;
+		const actualValue = value.value ?? "";
+		element.setAttribute(key.replace(/([A-Z])/g, "-$1").toLowerCase(), actualValue);
+	} else element.setAttribute(key.replace(/([A-Z])/g, "-$1").toLowerCase(), value);
 }
 /**
 * Remove multiple attributes from an HTML element.
@@ -651,10 +692,7 @@ function makeKey(el, componentName) {
 const Registry = {
 	set(el, componentName, instance) {
 		const key = makeKey(el, componentName);
-		if (store.has(key)) {
-			logger.warn(`Registry: <${componentName}> is already initialised on this element. Call destroy() on the existing instance before re-initialising.`);
-			return;
-		}
+		if (store.has(key)) throw new Error(`${componentName} is already initialized on this element`);
 		store.set(key, instance);
 		logger.info(`Registry: registered <${componentName}>`);
 	},
@@ -1274,6 +1312,7 @@ var DataStorage = class {
 * @property {string} attributeName The data attribute name to store the current theme mode.
 * @property {string} modeAttributeName The data attribute name to store the current theme mode on the trigger element.
 * @property {string} label The label template for the trigger element, where :mode will be replaced with the current mode.
+* @property {boolean} showTitle Whether to show the title attribute on the trigger element.
 * @property {string} storageKey The key used to store the theme mode in localStorage.
 * @property {string} className The CSS class name for the dark theme.
 */
@@ -1285,6 +1324,7 @@ const defaults = {
 	attributeName: "data-theme",
 	modeAttributeName: "data-mode",
 	label: "Switch to :mode theme",
+	showTitle: false,
 	storageKey: "theme",
 	className: "dark"
 };
@@ -1347,7 +1387,16 @@ var Theme = class extends BaseComponent {
 		setAttributes(this.options.parent, { [this.options.attributeName]: this.#getTheme() });
 		this.#getTriggers().forEach((trigger) => {
 			if (this.#isClickable(trigger)) setAttributes(trigger, { role: "button" });
-			if (this.#isClickable(trigger) || ["checkbox", "radio"].includes(trigger.type)) setAttributes(trigger, { ariaLabel: interpolate(this.options.label, { mode: this.#getMode(trigger) }) });
+			if (this.#isClickable(trigger) || ["checkbox", "radio"].includes(trigger.type)) {
+				const label = interpolate(this.options.label, { mode: this.#getMode(trigger) });
+				setAttributes(trigger, {
+					ariaLabel: label,
+					title: {
+						condition: this.options.showTitle,
+						value: label
+					}
+				});
+			}
 		});
 		const isDarkPreferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
 		if (this.#getTheme() === this.#modes.auto && isDarkPreferred || this.#getTheme() === this.#modes.dark) addClasses(this.options.parent, this.options.className);
@@ -1404,7 +1453,16 @@ var Theme = class extends BaseComponent {
 			if (trigger.type === "select-one") trigger.value = mode;
 			if (this.#isClickable(trigger) && hasAttribute(trigger, this.options.modeAttributeName)) setAttributes(trigger, { ariaPressed: this.#getMode(trigger) === mode });
 			if (this.#isClickable(trigger) && this.#isToggleable(trigger)) setAttributes(trigger, { ariaPressed: mode === this.#modes.dark });
-			if (this.#isToggleable(trigger)) setAttributes(trigger, { ariaLabel: interpolate(this.options.label, { mode: mode === this.#modes.dark ? this.#modes.light : this.#modes.dark }) });
+			if (this.#isToggleable(trigger)) {
+				const label = interpolate(this.options.label, { mode: mode === this.#modes.dark ? this.#modes.light : this.#modes.dark });
+				setAttributes(trigger, {
+					ariaLabel: label,
+					title: {
+						condition: this.options.showTitle,
+						value: label
+					}
+				});
+			}
 		});
 	}
 	/**

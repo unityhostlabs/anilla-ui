@@ -53,7 +53,7 @@ The `value` attribute of the `<option>` tag of a single `<select>` input, is use
 <DemoBox src="/demos/theme/selection-select-input.html"/>
 
 ```html
-<select class="theme-trigger">
+<select class="theme-trigger" title="Select theme">
     <option value="light">Light</option>
     <option value="dark">Dark</option>
     <option value="auto">Auto</option>
@@ -115,7 +115,8 @@ To fix the light theme flash before `dark` mode loads, you must apply the theme 
 | `autoModeName` | `string` | `auto` | The name of the auto mode. You can change it to some else like 'system' or 'device'. Remember to update the `value` or `data-mode` attributes of your triggers. |
 | `attributeName` | `string` | `data-theme` | The data attribute name to store the current theme mode. |
 | `modeAttributeName` | `string` | `data-mode` | The data attribute name to store the current theme mode on the trigger element. |
-| `label` | `string` | `Switch to :mode theme` | The label template for the trigger element, where `:mode` will be replaced with the current mode. |
+| `label` | `string` | `Switch to :mode theme` | The label template for the trigger element, where `:mode` will be replaced with the current mode. This sets `aria-label` attribute on supported elements with the label text as its value. `<select>` inputs are excluded and must be set manually. |
+| `showTitle` | `boolean` | `false` | Sets a `title` attribute with the label text as its value. `<select>` inputs are excluded. |
 | `storageKey` | `string` | `theme` | The key used to store the theme mode in localStorage. |
 | `className` | `string` | `dark` | The CSS class name for the dark theme. |
 
