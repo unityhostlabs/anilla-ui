@@ -742,40 +742,17 @@ const defaults$2 = {
 	transitionLeaveTo: null
 };
 /**
+* @typedef {'idle'|'entering'|'entered'|'leaving'|'cancelled'} TransitionState
+*/
+/**
 * Transition
 *
 * Orchestrates CSS transitions and animations using a class-swapping strategy
-* inspired by Alpine.js / Tailwind UI:
-*
-*   1. Add  `<effect>`      — the base class (e.g. "transition duration-300")
-*   2. Add  `<effect>From`  — the starting state (e.g. "opacity-0 scale-95")
-*   3. Remove `<effect>From`,  add `<effect>To` — the ending state (e.g. "opacity-100 scale-100")
-*   4. On transitionend / animationend — remove base + To classes, fire callback
-*
-* Config key convention:
-* 
-*   - transitionEnter      — base classes applied for the whole enter transition
-*   - transitionEnterFrom  — enter start state
-*   - transitionEnterTo    — enter end state
-*   - transitionLeave      — base classes applied for the whole leave transition
-*   - transitionLeaveFrom  — leave start state
-*   - transitionLeaveTo    — leave end state
-*
-* @example
-*   {
-*     transitionEnter:     'transition duration-300 ease-out',
-*     transitionEnterFrom: 'opacity-0 scale-95',
-*     transitionEnterTo:   'opacity-100 scale-100',
-*     transitionLeave:     'transition duration-200 ease-in',
-*     transitionLeaveFrom: 'opacity-100 scale-100',
-*     transitionLeaveTo:   'opacity-0 scale-95',
-*   }
+* inspired by Alpine.js / Tailwind UI.
 */
 var Transition = class {
 	/**
-	* Default values for all transition options.
-	* Merged into the validation whitelist in BaseComponent.parseDataAttributes
-	* so that data-{component}-transition-* attributes are never filtered out.
+	* Default transition option values.
 	* 
 	* @returns {Record<string, null>}
 	*/
@@ -784,42 +761,127 @@ var Transition = class {
 	}
 	/** @type {Record<string, string>} */
 	#config = {};
+	/** @type {AbortController|null} */
+	#controller = null;
+	/**
+	* Incremented for every transition execution.
+	* Used to invalidate stale async callbacks.
+	* 
+	* @type {number}
+	*/
+	#transitionId = 0;
 	/** @type {'transition'|'animation'} */
 	type = "transition";
-	/** Transition/animation duration in seconds (read from computed styles). */
+	/** Transition/animation duration in seconds. */
 	duration = 0;
-	/** Timing function (read from computed styles). */
+	/** Timing function. */
 	timing = "ease";
-	/** Whether _execute has been called and classes have been applied. */
+	/** Whether transition classes have been initialized. */
 	initialized = false;
-	/** Whether a transition/animation is currently running. */
-	busy = false;
 	/**
-	* The active effect name.
+	* Active effect name.
 	* 
 	* @type {'transitionEnter'|'transitionLeave'|null}
 	*/
 	effect = null;
-	/** The element currently being transitioned. */
+	/** Active transition target element. */
 	target = null;
+	/**
+	* Current transition state.
+	* 
+	* @type {TransitionState}
+	*/
+	state = "idle";
 	/** @param {Record<string, string>} config */
 	constructor(config) {
 		this.#config = config;
 	}
 	/**
-	* Run a named transition effect on an element.
-	*
+	* @param {TransitionState} state
+	*/
+	#setState(state) {
+		this.state = state;
+	}
+	/**
+	* @returns {boolean}
+	*/
+	isIdle() {
+		return this.state === "idle";
+	}
+	/**
+	* @returns {boolean}
+	*/
+	isEntering() {
+		return this.state === "entering";
+	}
+	/**
+	* @returns {boolean}
+	*/
+	isEntered() {
+		return this.state === "entered";
+	}
+	/**
+	* @returns {boolean}
+	*/
+	isLeaving() {
+		return this.state === "leaving";
+	}
+	/**
+	* @returns {boolean}
+	*/
+	isCancelled() {
+		return this.state === "cancelled";
+	}
+	/**
+	* Whether a transition is currently active.
+	* 
+	* @returns {boolean}
+	*/
+	isBusy() {
+		return this.isEntering() || this.isLeaving();
+	}
+	/**
+	* Remove all classes associated with an effect.
+	* 
+	* @param {'transitionEnter'|'transitionLeave'} effect
+	* @param {HTMLElement} element
+	*/
+	#cleanup(effect, element) {
+		const base = this.#config[effect];
+		const from = this.#config[`${effect}From`];
+		const to = this.#config[`${effect}To`];
+		if (base) removeClasses(element, base);
+		if (from) removeClasses(element, from);
+		if (to) removeClasses(element, to);
+	}
+	/**
+	* Reset transition runtime state.
+	*/
+	#reset() {
+		this.initialized = false;
+		this.effect = null;
+		this.target = null;
+	}
+	/**
+	* Run a transition effect.
+	* 
 	* @param {'transitionEnter'|'transitionLeave'} effect
 	* @param {HTMLElement} element
 	* @param {(e: TransitionEvent|AnimationEvent) => void} [callback]
-	* @returns {boolean} false if the effect is not configured
+	* @returns {boolean}
 	*/
 	_execute(effect, element, callback) {
 		const base = this.#config[effect];
 		const from = this.#config[`${effect}From`];
 		const to = this.#config[`${effect}To`];
 		if (!base) return false;
-		this.initialized = false;
+		this.cancel();
+		const transitionId = ++this.#transitionId;
+		const controller = new AbortController();
+		this.#controller = controller;
+		this.effect = effect;
+		this.target = element;
+		this.#setState(effect === "transitionEnter" ? "entering" : "leaving");
 		addClasses(element, base);
 		if (from) addClasses(element, from);
 		const styles = window.getComputedStyle(element);
@@ -827,52 +889,54 @@ var Transition = class {
 		this.type = isAnimation ? "animation" : "transition";
 		this.duration = parseFloat(isAnimation ? styles.animationDuration : styles.transitionDuration);
 		this.timing = isAnimation ? styles.animationTimingFunction : styles.transitionTimingFunction;
-		element.addEventListener(`${this.type}start`, () => {
-			this.busy = true;
-			this.effect = effect;
-			this.target = element;
-		}, { once: true });
-		element.addEventListener(`${this.type}cancel`, () => {
-			this.busy = false;
-			this.effect = null;
-			this.target = null;
-		}, { once: true });
-		element.addEventListener(`${this.type}end`, (e) => {
-			this.busy = false;
-			this.initialized = false;
-			this.effect = null;
-			this.target = null;
+		element.addEventListener(this.event("cancel"), () => {
+			if (transitionId !== this.#transitionId) return;
+			this.#reset();
+			this.#setState("cancelled");
+		}, {
+			once: true,
+			signal: controller.signal
+		});
+		element.addEventListener(this.event("end"), (e) => {
+			if (transitionId !== this.#transitionId) return;
+			this.#cleanup(effect, element);
+			this.#reset();
+			this.#setState(effect === "transitionEnter" ? "entered" : "idle");
 			if (typeof callback === "function") callback(e);
-			removeClasses(element, base);
-			if (to) removeClasses(element, to);
-		}, { once: true });
+		}, {
+			once: true,
+			signal: controller.signal
+		});
 		window.requestAnimationFrame(() => {
+			if (transitionId !== this.#transitionId) return;
 			if (from) removeClasses(element, from);
 			if (to) addClasses(element, to);
+			this.initialized = true;
 		});
-		this.initialized = true;
 		return true;
 	}
 	/**
-	* Run the enter transition.
+	* Run enter transition.
 	* 
 	* @param {HTMLElement} element
 	* @param {(e: TransitionEvent|AnimationEvent) => void} [callback]
+	* @returns {boolean}
 	*/
 	enter(element, callback) {
 		return this._execute("transitionEnter", element, callback);
 	}
 	/**
-	* Run the leave transition.
+	* Run leave transition.
 	* 
 	* @param {HTMLElement} element
 	* @param {(e: TransitionEvent|AnimationEvent) => void} [callback]
+	* @returns {boolean}
 	*/
 	leave(element, callback) {
 		return this._execute("transitionLeave", element, callback);
 	}
 	/**
-	* Whether either an enter or leave transition is configured.
+	* Whether either an enter or leave transition exists.
 	* 
 	* @returns {boolean}
 	*/
@@ -880,25 +944,22 @@ var Transition = class {
 		return !!(this.#config.transitionEnter || this.#config.transitionLeave);
 	}
 	/**
-	* Immediately cancel the active transition and strip all applied classes.
+	* Immediately cancel the active transition.
 	*/
 	cancel() {
 		if (!this.effect || !this.target) return;
-		const base = this.#config[this.effect];
-		const from = this.#config[`${this.effect}From`];
-		const to = this.#config[`${this.effect}To`];
-		if (base) removeClasses(this.target, base);
-		if (from) removeClasses(this.target, from);
-		if (to) removeClasses(this.target, to);
-		this.busy = false;
-		this.effect = null;
-		this.target = null;
+		this.#transitionId++;
+		this.#controller?.abort();
+		this.#cleanup(this.effect, this.target);
+		this.#controller = null;
+		this.#reset();
+		this.#setState("cancelled");
 	}
 	/**
-	* Returns the full DOM event name for a given transition phase.
+	* Returns the full DOM event name for a transition phase.
 	* 
 	* @param {'start'|'end'|'cancel'} phase
-	* @returns {string} e.g. 'transitionend' | 'animationend'
+	* @returns {string}
 	*/
 	event(phase) {
 		return `${this.type}${phase}`;
