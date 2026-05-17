@@ -55,6 +55,11 @@ var __exportAll = (all, no_symbols) => {
 * @property {boolean} debug
 *   When true, enables verbose internal logging. Overrides logLevel to
 *   print everything including lifecycle events and registry operations.
+* 
+* @property {Function} _autoInitBoot
+*   Internal callback used by AutoInit to trigger a scan when the app boots.
+*   This is set by AutoInit and called by configure() if autoInit is enabled.
+*   Not intended for external use.
 */
 /** @type {AnillaUIConfig} */
 const defaults$3 = {
@@ -63,7 +68,8 @@ const defaults$3 = {
 	dataPrefix: "ui",
 	autoInit: false,
 	logLevel: "error",
-	debug: false
+	debug: false,
+	_autoInitBoot: () => void 0
 };
 /** @type {AnillaUIConfig} */
 const config = { ...defaults$3 };
@@ -174,7 +180,7 @@ function coerceType(value) {
 *   We then strip the component slug prefix and lowercase the first character:
 *   "modalActiveClass" → strip "modal" → "ActiveClass" → "activeClass" ✓
 *
-* @param {Element}              el        The DOM element to read from
+* @param {HTMLElement}              el        The DOM element to read from
 * @param {string}               slug      Lowercase component name, e.g. 'modal'
 * @param {Record<string, any>}  defaults  The component's declared default options
 * @returns {Record<string, any>}
@@ -208,7 +214,8 @@ function parseComponentDataAttributes(el, slug, defaults) {
 */
 function interpolate(template, placeholders = {}) {
 	return Object.keys(placeholders).reduce((result, token) => {
-		return result.replaceAll(`:${token}`, placeholders[token]);
+		const value = String(placeholders[token]);
+		return result.replaceAll(`:${token}`, value);
 	}, template);
 }
 /**
@@ -247,7 +254,7 @@ function query(selectorOrElement, context = document) {
 * @template {keyof HTMLElementTagNameMap | string} K
 * @param {K | Map<string, HTMLElement>} selectorOrMap - CSS selector or Map of elements
 * @param {ParentNode} [context=document] - The root element to search within
-* @returns {Array<HTMLElement>}
+* @returns {Array<K extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[K] : HTMLElement>}
 */
 function queryAll(selectorOrMap, context = document) {
 	if (selectorOrMap instanceof Map) return Array.from(selectorOrMap.values());
@@ -271,7 +278,7 @@ function slug(value) {
 * @returns {Array}
 */
 function toArray(value, separator = ",") {
-	const arr = isString(value) ? value.split(separator).map((x) => x.trim()).filter((x) => x !== "") : value;
+	const arr = typeof value === "string" ? value.split(separator).map((x) => x.trim()).filter((x) => x !== "") : value;
 	return arr instanceof Array ? arr : [];
 }
 /**
@@ -600,15 +607,15 @@ var EventBus = class {
 * at once on component destroy.
 */
 var DOMEventStore = class {
-	/** @type {Array<{el: Element, type: string, handler: Function, options: any}>} */
+	/** @type {Array<{el: Element | Window | Document, type: string, handler: EventListenerOrEventListenerObject, options: any}>} */
 	#entries = [];
 	/**
 	* Attach a native DOM listener and record it.
 	* 
-	* @param {Element|Window|Document} el
+	* @param {Element | Window | Document} el
 	* @param {string} type
-	* @param {Function} handler
-	* @param {boolean|AddEventListenerOptions} [options]
+	* @param {EventListenerOrEventListenerObject} handler
+	* @param {boolean | AddEventListenerOptions} [options]
 	*/
 	add(el, type, handler, options) {
 		el.addEventListener(type, handler, options);
@@ -622,9 +629,9 @@ var DOMEventStore = class {
 	/**
 	* Remove a specific listener that was previously added through this store.
 	* 
-	* @param {Element|Window|Document} el
+	* @param {Element | Window | Document} el
 	* @param {string} type
-	* @param {Function} handler
+	* @param {EventListenerOrEventListenerObject} handler
 	*/
 	remove(el, type, handler) {
 		this.#entries = this.#entries.filter((entry) => {
@@ -645,7 +652,7 @@ var DOMEventStore = class {
 	/**
 	* Return a snapshot of all recorded entries (read-only, for debugging).
 	* 
-	* @returns {Readonly<Array<{el: Element, type: string, handler: Function, options: any}>>}
+	* @returns {Readonly<Array<{el: Element | Window | Document, type: string, handler: EventListenerOrEventListenerObject, options: any}>>}
 	*/
 	getAll() {
 		return Object.freeze([...this.#entries]);
@@ -664,7 +671,7 @@ var DOMEventStore = class {
 * A `data-<dataPrefix>-id` attribute is stamped on the element for lookup.
 */
 let _uid = 0;
-/** @type {Map<string, BaseComponent>} */
+/** @type {Map<string, import('./BaseComponent.js').BaseComponent>} */
 const store = /* @__PURE__ */ new Map();
 /**
 * Return the current id attribute name derived from config.
@@ -732,6 +739,15 @@ const Registry = {
 };
 //#endregion
 //#region src/core/Transition.js
+/**
+* @typedef {Object} TransitionOptions
+* @property {string | null} [transitionEnter]
+* @property {string | null} [transitionEnterFrom]
+* @property {string | null} [transitionEnterTo]
+* @property {string | null} [transitionLeave]
+* @property {string | null} [transitionLeaveFrom]
+* @property {string | null} [transitionLeaveTo]
+*/
 /** @type {TransitionOptions} */
 const defaults$2 = {
 	transitionEnter: null,
@@ -754,7 +770,7 @@ var Transition = class {
 	/**
 	* Default transition option values.
 	* 
-	* @returns {Record<string, null>}
+	* @returns {TransitionOptions}
 	*/
 	static get defaults() {
 		return defaults$2;
@@ -792,7 +808,11 @@ var Transition = class {
 	* @type {TransitionState}
 	*/
 	state = "idle";
-	/** @param {Record<string, string>} config */
+	/** 
+	* Constructor
+	* 
+	* @param {Record<string, string>} config 
+	* */
 	constructor(config) {
 		this.#config = config;
 	}
@@ -801,44 +821,6 @@ var Transition = class {
 	*/
 	#setState(state) {
 		this.state = state;
-	}
-	/**
-	* @returns {boolean}
-	*/
-	isIdle() {
-		return this.state === "idle";
-	}
-	/**
-	* @returns {boolean}
-	*/
-	isEntering() {
-		return this.state === "entering";
-	}
-	/**
-	* @returns {boolean}
-	*/
-	isEntered() {
-		return this.state === "entered";
-	}
-	/**
-	* @returns {boolean}
-	*/
-	isLeaving() {
-		return this.state === "leaving";
-	}
-	/**
-	* @returns {boolean}
-	*/
-	isCancelled() {
-		return this.state === "cancelled";
-	}
-	/**
-	* Whether a transition is currently active.
-	* 
-	* @returns {boolean}
-	*/
-	isBusy() {
-		return this.isEntering() || this.isLeaving();
 	}
 	/**
 	* Remove all classes associated with an effect.
@@ -870,7 +852,7 @@ var Transition = class {
 	* @param {(e: TransitionEvent|AnimationEvent) => void} [callback]
 	* @returns {boolean}
 	*/
-	_execute(effect, element, callback) {
+	#execute(effect, element, callback) {
 		const base = this.#config[effect];
 		const from = this.#config[`${effect}From`];
 		const to = this.#config[`${effect}To`];
@@ -898,11 +880,12 @@ var Transition = class {
 			signal: controller.signal
 		});
 		element.addEventListener(this.event("end"), (e) => {
+			const evt = e;
 			if (transitionId !== this.#transitionId) return;
 			this.#cleanup(effect, element);
 			this.#reset();
 			this.#setState(effect === "transitionEnter" ? "entered" : "idle");
-			if (typeof callback === "function") callback(e);
+			if (typeof callback === "function") callback(evt);
 		}, {
 			once: true,
 			signal: controller.signal
@@ -923,7 +906,7 @@ var Transition = class {
 	* @returns {boolean}
 	*/
 	enter(element, callback) {
-		return this._execute("transitionEnter", element, callback);
+		return this.#execute("transitionEnter", element, callback);
 	}
 	/**
 	* Run leave transition.
@@ -933,7 +916,7 @@ var Transition = class {
 	* @returns {boolean}
 	*/
 	leave(element, callback) {
-		return this._execute("transitionLeave", element, callback);
+		return this.#execute("transitionLeave", element, callback);
 	}
 	/**
 	* Whether either an enter or leave transition exists.
@@ -964,9 +947,56 @@ var Transition = class {
 	event(phase) {
 		return `${this.type}${phase}`;
 	}
+	/**
+	* @returns {boolean}
+	*/
+	get isIdle() {
+		return this.state === "idle";
+	}
+	/**
+	* @returns {boolean}
+	*/
+	get isEntering() {
+		return this.state === "entering";
+	}
+	/**
+	* @returns {boolean}
+	*/
+	get isEntered() {
+		return this.state === "entered";
+	}
+	/**
+	* @returns {boolean}
+	*/
+	get isLeaving() {
+		return this.state === "leaving";
+	}
+	/**
+	* @returns {boolean}
+	*/
+	get isCancelled() {
+		return this.state === "cancelled";
+	}
+	/**
+	* Whether a transition is currently active.
+	* 
+	* @returns {boolean}
+	*/
+	get isBusy() {
+		return this.isEntering || this.isLeaving;
+	}
 };
 //#endregion
 //#region src/core/BaseComponent.js
+/**
+* Shortcut for all standard browser events including Window-specific ones
+* @typedef {GlobalEventHandlersEventMap & WindowEventHandlersEventMap} BrowserEvents
+*/
+/**
+* Reusable handler using the shortcut
+* @template {keyof BrowserEvents} K
+* @typedef {(this: any, ev: BrowserEvents[K]) => any} DOMEventHandler
+*/
 /**
 * BaseComponent
 *
@@ -1010,7 +1040,7 @@ var BaseComponent = class {
 	* Called automatically by AutoInit. Can also be used manually:
 	*   const opts = Modal.parseDataAttributes(el);
 	*
-	* @param {Element} el
+	* @param {HTMLElement} el
 	* @returns {Record<string, any>}
 	*/
 	static parseDataAttributes(el) {
@@ -1019,7 +1049,7 @@ var BaseComponent = class {
 			...this.defaults
 		});
 	}
-	/** @type {Element} */
+	/** @type {HTMLElement} */
 	#el;
 	/** @type {O} */
 	#options;
@@ -1040,19 +1070,28 @@ var BaseComponent = class {
 	constructor(target, options = {}) {
 		if (typeof target === "string") {
 			const el = document.querySelector(target);
-			if (!el) throw new Error(`[${config.name} / ${this.constructor.componentName}] No element found for selector "${target}".`);
+			if (!el) throw new Error(`[${config.name} / ${this.name}] No element found for selector "${target}".`);
 			this.#el = el;
 		} else if (target instanceof Element) this.#el = target;
-		else throw new TypeError(`[${config.name} / ${this.constructor.componentName}] First argument must be a CSS selector string or an Element.`);
-		const dataOptions = this.constructor.parseDataAttributes(this.#el);
+		else throw new TypeError(`[${config.name} / ${this.name}] First argument must be a CSS selector string or an Element.`);
+		const staticConstructor = this.constructor;
+		const dataOptions = staticConstructor.parseDataAttributes(this.#el);
 		this.#options = {
-			...this.constructor.defaults,
+			...staticConstructor.defaults,
 			...options,
 			...dataOptions
 		};
 		this.#transition = new Transition(this.#options);
-		Registry.set(this.#el, this.constructor.componentName, this);
-		logger.info(`${this.constructor.componentName}: initialized`, this.#el);
+		Registry.set(this.#el, this.name, this);
+		logger.info(`${this.name}: initialized`, this.#el);
+	}
+	/**
+	* Get the component name dynamically from the constructor.
+	* 
+	* @type {string}
+	*/
+	get name() {
+		return this.constructor.componentName;
 	}
 	/** The root DOM element this component is bound to. */
 	get el() {
@@ -1061,7 +1100,7 @@ var BaseComponent = class {
 	/** 
 	* Merged options object (static defaults + user options).
 	* 
-	* @returns {O & TransitionOptions} 
+	* @returns {O & import('./Transition.js').TransitionOptions}
 	*/
 	get options() {
 		return this.#options;
@@ -1080,7 +1119,7 @@ var BaseComponent = class {
 	/**
 	* Subscribe to a component lifecycle / custom event.
 	* 
-	* @param {keyof T} event
+	* @param {Extract<keyof T, string> | 'destroy'} event
 	* @param {(...args: any[]) => void} handler
 	* @returns {() => void}
 	*/
@@ -1090,7 +1129,7 @@ var BaseComponent = class {
 	/**
 	* Subscribe to a component event exactly once.
 	* 
-	* @param {keyof T} event
+	* @param {Extract<keyof T, string> | 'destroy'} event
 	* @param {(...args: any[]) => void} handler
 	* @returns {() => void}
 	*/
@@ -1101,20 +1140,12 @@ var BaseComponent = class {
 	* Unsubscribe from a component event.
 	* If handler is omitted, all handlers for the event will be removed.
 	* 
-	* @param {keyof T} event
+	* @param {Extract<keyof T, string> | 'destroy'} event
 	* @param {(...args: any[]) => void} [handler]
 	*/
 	off(event, handler) {
 		this.#bus.off(event, handler);
 	}
-	/**
-	* Emit a component event.
-	* Event handlers will receive any additional arguments passed to emit() after the event name.
-	* For example: this.emit('open', data) will pass data to all handlers subscribed to 'open'.
-	* 
-	* @param {keyof T} event 
-	* @param {...any} args
-	*/
 	/**
 	* Emit a component event.
 	*
@@ -1141,7 +1172,7 @@ var BaseComponent = class {
 	*
 	* The CustomEvent bubbles by default so parent elements can also listen.
 	*
-	* @param {keyof T} event
+	* @param {Extract<keyof T, string> | 'destroy'} event
 	* @param {...any} args
 	*/
 	emit(event, ...args) {
@@ -1167,7 +1198,7 @@ var BaseComponent = class {
 	* Prefer this over bare addEventListener inside subclasses.
 	*
 	* @template {keyof BrowserEvents} K
-	* @param {Element|Window|Document} el
+	* @param {Element | Window | Document} el
 	* @param {K} type
 	* @param {DOMEventHandler<K>} handler
 	* @param {boolean|AddEventListenerOptions} [options]
@@ -1191,7 +1222,7 @@ var BaseComponent = class {
 	* Return a read-only snapshot of all tracked DOM listeners.
 	* Useful for debugging or introspection.
 	* 
-	* @returns {Readonly<Array<{el: Element, type: string, handler: Function}>>}
+	* @returns {Readonly<Array<{ el: Element | Window | Document | MediaQueryList, type: string, handler: EventListenerOrEventListenerObject, options?: any }>>}
 	*/
 	get domEvents() {
 		return this.#domEvents.getAll();
@@ -1210,8 +1241,8 @@ var BaseComponent = class {
 		this.emit("destroy", this);
 		this.#domEvents.removeAll();
 		this.#bus.clear();
-		Registry.delete(this.#el, this.constructor.componentName);
-		logger.info(`${this.constructor.componentName}: destroyed`, this.#el);
+		Registry.delete(this.#el, this.name);
+		logger.info(`${this.name}: destroyed`, this.#el);
 	}
 	/**
 	* Retrieve an existing instance by CSS selector or Element.
@@ -1247,10 +1278,10 @@ var BaseComponent = class {
 //#region src/core/DataStorage.js
 /**
 * @typedef {Object} Options
-* @property {string} prefix The prefix for the storage keys.
-* @property {string} delimiter The delimiter for the storage keys.
-* @property {boolean} jsonEncode Whether to JSON encode values before storing.
-* @property {'local' | 'session'} storageType The type of storage to use.
+* @property {string} [prefix] The prefix for the storage keys.
+* @property {string} [delimiter] The delimiter for the storage keys.
+* @property {boolean} [jsonEncode] Whether to JSON encode values before storing.
+* @property {'local' | 'session'} [storageType] The type of storage to use.
 */
 /** @type {Options} */
 const defaults$1 = {
@@ -1366,25 +1397,25 @@ var DataStorage = class {
 */
 /**
 * @typedef {Object} ThemeOptions
-* @property {HTMLElement | string} trigger The element or selector that triggers the theme change.
-* @property {HTMLElement | string} parent The parent element or selector to apply the theme class to.
-* @property {string} autoModeName The name of the auto mode.
-* @property {string} attributeName The data attribute name to store the current theme mode.
-* @property {string} modeAttributeName The data attribute name to store the current theme mode on the trigger element.
-* @property {string} label The label template for the trigger element, where :mode will be replaced with the current mode.
-* @property {boolean} showTitle Whether to show the title attribute on the trigger element.
-* @property {string} storageKey The key used to store the theme mode in localStorage.
-* @property {string} className The CSS class name for the dark theme.
+* @property {string} [trigger] The element or selector that triggers the theme change.
+* @property {ThemeMode | string} [autoModeName] The name of the auto mode.
+* @property {string} [attributeName] The data attribute name to store the current theme mode.
+* @property {string} [modeAttributeName] The data attribute name to store the current theme mode on the trigger element.
+* @property {string} [label] The label template for the trigger element, where :mode will be replaced with the current mode.
+* @property {boolean} [showTitle] Whether to show the title attribute on the trigger element.
+* @property {boolean} [listenToStorage] Whether to listen to storage events for theme changes across tabs.
+* @property {string} [storageKey] The key used to store the theme mode in localStorage.
+* @property {string} [className] The CSS class name for the dark theme.
 */
 /** @type {ThemeOptions} */
 const defaults = {
 	trigger: void 0,
-	parent: document.documentElement,
 	autoModeName: "auto",
 	attributeName: "data-theme",
 	modeAttributeName: "data-mode",
 	label: "Switch to :mode theme",
 	showTitle: false,
+	listenToStorage: true,
 	storageKey: "theme",
 	className: "dark"
 };
@@ -1402,9 +1433,8 @@ var Theme = class extends BaseComponent {
 	static get defaults() {
 		return defaults;
 	}
-	/** @private */
 	#storage = new DataStorage({ jsonEncode: false });
-	/** @private */
+	/** @type {Record<ThemeMode, ThemeMode>} */
 	#modes = {
 		light: "light",
 		dark: "dark",
@@ -1422,7 +1452,7 @@ var Theme = class extends BaseComponent {
 	}
 	#init() {
 		this.#modes.auto = this.options.autoModeName;
-		this.options.parent = query(this.options.parent);
+		/** @param {Event} e */
 		const _onTrigger = (e) => {
 			e.preventDefault();
 			e.stopPropagation();
@@ -1434,20 +1464,23 @@ var Theme = class extends BaseComponent {
 			if (this.#isClickable(trigger)) this.addListener(trigger, "click", _onTrigger);
 			if (this.#isChangeable(trigger)) this.addListener(trigger, "change", _onTrigger);
 		});
-		this.addListener(window.matchMedia("(prefers-color-scheme: dark)"), "change", (e) => {
-			if (this.#getTheme() === this.#modes.auto) if (e.matches) addClasses(this.options.parent, this.options.className);
-			else removeClasses(this.options.parent, this.options.className);
+		const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+		this.addListener(mediaQuery, "change", (event) => {
+			const e = event;
+			if (this.#getTheme() === this.#modes.auto) if (e.matches) addClasses(this.el, this.options.className);
+			else removeClasses(this.el, this.options.className);
 		});
-		this.addListener(window, "storage", (e) => {
+		if (this.options.listenToStorage) this.addListener(window, "storage", (e) => {
 			if (this.options.storageKey === e.key) {
-				const mode = e.newValue;
-				this.change(mode || this.#modes.auto);
+				const mode = e.newValue || this.#modes.auto;
+				this.change(mode);
 			}
 		});
-		setAttributes(this.options.parent, { [this.options.attributeName]: this.#getTheme() });
+		setAttributes(this.el, { [this.options.attributeName]: this.#getTheme() });
 		this.#getTriggers().forEach((trigger) => {
 			if (this.#isClickable(trigger)) setAttributes(trigger, { role: "button" });
-			if (this.#isClickable(trigger) || ["checkbox", "radio"].includes(trigger.type)) {
+			const type = "type" in trigger ? trigger.type : "";
+			if (this.#isClickable(trigger) || ["checkbox", "radio"].includes(type)) {
 				const label = interpolate(this.options.label, { mode: this.#getMode(trigger) });
 				setAttributes(trigger, {
 					ariaLabel: label,
@@ -1459,13 +1492,18 @@ var Theme = class extends BaseComponent {
 			}
 		});
 		const isDarkPreferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
-		if (this.#getTheme() === this.#modes.auto && isDarkPreferred || this.#getTheme() === this.#modes.dark) addClasses(this.options.parent, this.options.className);
+		if (this.#getTheme() === this.#modes.auto && isDarkPreferred || this.#getTheme() === this.#modes.dark) addClasses(this.el, this.options.className);
 		this.#updateTriggerState(this.#getTheme());
 	}
+	/**
+	* Retrieves all trigger elements for this instance.
+	* 
+	* @returns {Array<HTMLAnchorElement | HTMLButtonElement | HTMLInputElement | HTMLSelectElement>}
+	*/
 	#getTriggers() {
 		return queryAll(this.options.trigger);
 	}
-	/** @returns {string} */
+	/** @returns {ThemeMode} */
 	#getTheme() {
 		return this.#storage.get(this.options.storageKey, this.#modes.auto);
 	}
@@ -1473,12 +1511,13 @@ var Theme = class extends BaseComponent {
 	* Determine the theme mode from an element's value or data attribute.
 	* 
 	* @param {HTMLElement} el
-	* @returns {string}
+	* @returns {ThemeMode}
 	*/
 	#getMode(el) {
-		if (el.type === "checkbox") return el.checked ? this.#modes.dark : this.#modes.light;
+		if (el instanceof HTMLInputElement && el.type === "checkbox") return el.checked ? this.#modes.dark : this.#modes.light;
 		if (this.#isClickable(el) && !hasAttribute(el, this.options.modeAttributeName)) return !hasAttribute(el, "aria-pressed") || getAttribute(el, "aria-pressed") !== "true" ? this.#modes.dark : this.#modes.light;
-		const mode = !isEmpty(el.value) ? el.value : getAttribute(el, this.options.modeAttributeName);
+		const val = "value" in el ? el.value : "";
+		const mode = !isEmpty(val) ? val : getAttribute(el, this.options.modeAttributeName);
 		return objectHasValue(this.#modes, mode) ? mode : this.#modes.auto;
 	}
 	/** 
@@ -1486,11 +1525,12 @@ var Theme = class extends BaseComponent {
 	* @returns {boolean}
 	*/
 	#isChangeable(el) {
+		const type = "type" in el ? el.type : "";
 		return [
 			"select-one",
 			"radio",
 			"checkbox"
-		].includes(el.type);
+		].includes(type);
 	}
 	/** 
 	* @param {HTMLElement} el 
@@ -1504,13 +1544,18 @@ var Theme = class extends BaseComponent {
 	* @returns {boolean}
 	*/
 	#isToggleable(el) {
-		return el.type === "checkbox" || this.#isClickable(el) && !hasAttribute(el, this.options.modeAttributeName);
+		return ("type" in el ? el.type : "") === "checkbox" || this.#isClickable(el) && !hasAttribute(el, this.options.modeAttributeName);
 	}
+	/** @param {ThemeMode} mode  */
 	#updateTriggerState(mode) {
 		this.#getTriggers().forEach((trigger) => {
-			if (trigger.type === "checkbox") trigger.checked = mode === this.#modes.dark;
-			if (trigger.type === "radio") trigger.checked = mode === this.#getMode(trigger);
-			if (trigger.type === "select-one") trigger.value = mode;
+			if (trigger instanceof HTMLInputElement) {
+				if (trigger.type === "checkbox") trigger.checked = mode === this.#modes.dark;
+				if (trigger.type === "radio") trigger.checked = mode === this.#getMode(trigger);
+			}
+			if (trigger instanceof HTMLSelectElement) {
+				if (trigger.type === "select-one") trigger.value = mode;
+			}
 			if (this.#isClickable(trigger) && hasAttribute(trigger, this.options.modeAttributeName)) setAttributes(trigger, { ariaPressed: this.#getMode(trigger) === mode });
 			if (this.#isClickable(trigger) && this.#isToggleable(trigger)) setAttributes(trigger, { ariaPressed: mode === this.#modes.dark });
 			if (this.#isToggleable(trigger)) {
@@ -1535,21 +1580,25 @@ var Theme = class extends BaseComponent {
 		const shouldAddDarkClass = mode === this.#modes.dark || mode === this.#modes.auto && isDarkPreferred;
 		if (mode === this.#modes.auto) this.#storage.remove(this.options.storageKey);
 		else this.#storage.set(this.options.storageKey, mode);
-		if (shouldAddDarkClass) addClasses(this.options.parent, this.options.className);
-		else removeClasses(this.options.parent, this.options.className);
-		setAttributes(this.options.parent, { [this.options.attributeName]: mode });
+		if (shouldAddDarkClass) addClasses(this.el, this.options.className);
+		else removeClasses(this.el, this.options.className);
+		setAttributes(this.el, { [this.options.attributeName]: mode });
 		this.#updateTriggerState(mode);
 		this.emit("change", this);
 	}
 	destroy() {
 		this.#storage.remove(this.options.storageKey);
-		removeClasses(this.options.parent, this.options.className);
-		removeAttributes(this.options.parent, [this.options.attributeName]);
+		removeClasses(this.el, this.options.className);
+		removeAttributes(this.el, [this.options.attributeName]);
 		this.#getTriggers().forEach((trigger) => {
 			if (this.#isClickable(trigger)) removeAttributes(trigger, ["aria-pressed", "aria-label"]);
 			if (this.#isChangeable(trigger)) {
-				if (trigger.type === "select-one") trigger.selectedIndex = 0;
-				if (trigger.type === "radio" || trigger.type === "checkbox") trigger.checked = false;
+				if (trigger instanceof HTMLSelectElement) {
+					if (trigger.type === "select-one") trigger.selectedIndex = 0;
+				}
+				if (trigger instanceof HTMLInputElement) {
+					if (trigger.type === "radio" || trigger.type === "checkbox") trigger.checked = false;
+				}
 			}
 		});
 		super.destroy();

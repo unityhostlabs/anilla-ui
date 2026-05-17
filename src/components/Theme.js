@@ -13,7 +13,6 @@ import {
     removeClasses,
     interpolate
 } from '../core/utils.js';
-import { config, logger } from '../core/config.js';
 
 /**
  * @typedef {'light' | 'dark' | 'auto'} ThemeMode
@@ -21,26 +20,26 @@ import { config, logger } from '../core/config.js';
 
 /**
  * @typedef {Object} ThemeOptions
- * @property {HTMLElement | string} trigger The element or selector that triggers the theme change.
- * @property {HTMLElement | string} parent The parent element or selector to apply the theme class to.
- * @property {string} autoModeName The name of the auto mode.
- * @property {string} attributeName The data attribute name to store the current theme mode.
- * @property {string} modeAttributeName The data attribute name to store the current theme mode on the trigger element.
- * @property {string} label The label template for the trigger element, where :mode will be replaced with the current mode.
- * @property {boolean} showTitle Whether to show the title attribute on the trigger element.
- * @property {string} storageKey The key used to store the theme mode in localStorage.
- * @property {string} className The CSS class name for the dark theme.
+ * @property {string} [trigger] The element or selector that triggers the theme change.
+ * @property {ThemeMode | string} [autoModeName] The name of the auto mode.
+ * @property {string} [attributeName] The data attribute name to store the current theme mode.
+ * @property {string} [modeAttributeName] The data attribute name to store the current theme mode on the trigger element.
+ * @property {string} [label] The label template for the trigger element, where :mode will be replaced with the current mode.
+ * @property {boolean} [showTitle] Whether to show the title attribute on the trigger element.
+ * @property {boolean} [listenToStorage] Whether to listen to storage events for theme changes across tabs.
+ * @property {string} [storageKey] The key used to store the theme mode in localStorage.
+ * @property {string} [className] The CSS class name for the dark theme.
  */
 
 /** @type {ThemeOptions} */
 const defaults = {
     trigger: undefined,
-    parent: document.documentElement,
     autoModeName: 'auto',
     attributeName: 'data-theme',
     modeAttributeName: 'data-mode',
     label: 'Switch to :mode theme',
     showTitle: false,
+    listenToStorage: true,
     storageKey: 'theme',
     className: 'dark'
 };
@@ -62,10 +61,9 @@ export class Theme extends BaseComponent {
         return defaults;
     }
 
-    /** @private */
     #storage = new DataStorage({ jsonEncode: false });
 
-    /** @private */
+    /** @type {Record<ThemeMode, ThemeMode>} */
     #modes = {
         light: 'light',
         dark: 'dark',
@@ -86,14 +84,14 @@ export class Theme extends BaseComponent {
     // --- Core
 
     #init() {
-        this.#modes.auto = this.options.autoModeName;
-        this.options.parent = query(this.options.parent);
+        this.#modes.auto = /** @type {ThemeMode} */ (this.options.autoModeName);
 
+         /** @param {Event} e */
         const _onTrigger = (e) => {
             e.preventDefault();
             e.stopPropagation();
 
-            const trigger = e.target;
+            const trigger = /** @type {HTMLElement} */ (e.target);
             const mode = this.#getMode(trigger);
 
             this.change(mode);
@@ -109,25 +107,31 @@ export class Theme extends BaseComponent {
             }
         });
 
-        this.addListener(window.matchMedia('(prefers-color-scheme: dark)'), 'change', (e) => {
+        const mediaQuery = /** @type {any} */ (window.matchMedia('(prefers-color-scheme: dark)'));
+
+        this.addListener(mediaQuery, 'change', (event) => {
+            const e = /** @type {MediaQueryListEvent} */ (event);
+            
             if (this.#getTheme() === this.#modes.auto) {
                 if (e.matches) {
-                    addClasses(this.options.parent, this.options.className);
+                    addClasses(this.el, this.options.className);
                 } else {
-                    removeClasses(this.options.parent, this.options.className);
+                    removeClasses(this.el, this.options.className);
                 }
             }
         });
 
-        this.addListener(window, 'storage', (e) => {
-            if (this.options.storageKey === e.key) {
-                const mode = e.newValue;
-                this.change(mode || this.#modes.auto);
-            }
-        });
-
+        if (this.options.listenToStorage) {            
+            this.addListener(window, 'storage', (e) => {
+                if (this.options.storageKey === e.key) {
+                    const mode = /** @type {ThemeMode} */ (e.newValue || this.#modes.auto);
+                    this.change(mode);
+                }
+            });
+        }
+     
         // Set initial attributes
-        setAttributes(this.options.parent, {
+        setAttributes(this.el, {
             [this.options.attributeName]: this.#getTheme()
         });
 
@@ -138,7 +142,9 @@ export class Theme extends BaseComponent {
                 });
             }
 
-            if (this.#isClickable(trigger) || ['checkbox', 'radio'].includes(trigger.type)) {
+            const type = 'type' in trigger ? trigger.type : '';
+
+            if (this.#isClickable(trigger) || ['checkbox', 'radio'].includes(type)) {
                 const label = interpolate(this.options.label, { mode: this.#getMode(trigger) });
                 setAttributes(trigger, {
                     ariaLabel: label,
@@ -151,18 +157,23 @@ export class Theme extends BaseComponent {
         const isDarkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
         if ((this.#getTheme() === this.#modes.auto && isDarkPreferred) || this.#getTheme() === this.#modes.dark) {
-            addClasses(this.options.parent, this.options.className);
+            addClasses(this.el, this.options.className);
         }
 
         // Update trigger state on initialization
         this.#updateTriggerState(this.#getTheme());
     }
 
+    /**
+     * Retrieves all trigger elements for this instance.
+     * 
+     * @returns {Array<HTMLAnchorElement | HTMLButtonElement | HTMLInputElement | HTMLSelectElement>}
+     */
     #getTriggers() {
-        return queryAll(this.options.trigger);
+        return /** @type {any} */ (queryAll(this.options.trigger));
     }
 
-    /** @returns {string} */
+    /** @returns {ThemeMode} */
     #getTheme() {
         return this.#storage.get(this.options.storageKey, this.#modes.auto);
     }
@@ -171,11 +182,11 @@ export class Theme extends BaseComponent {
      * Determine the theme mode from an element's value or data attribute.
      * 
      * @param {HTMLElement} el
-     * @returns {string}
+     * @returns {ThemeMode}
      */
     #getMode(el) {
         // Handle checkbox toggle
-        if (el.type === 'checkbox') {
+        if (el instanceof HTMLInputElement && el.type === 'checkbox') {
             return el.checked ? this.#modes.dark : this.#modes.light;
         }
 
@@ -187,7 +198,8 @@ export class Theme extends BaseComponent {
         }
 
         // Get mode from value or attribute
-        const mode = !isEmpty(el.value) ? el.value : getAttribute(el, this.options.modeAttributeName);
+        const val = 'value' in el ? /** @type {HTMLInputElement | HTMLSelectElement} */ (el).value : '';
+        const mode = /** @type {ThemeMode} */ (!isEmpty(val) ? val : getAttribute(el, this.options.modeAttributeName));
 
         // Return valid mode or default to auto
         return objectHasValue(this.#modes, mode) ? mode : this.#modes.auto;
@@ -198,7 +210,9 @@ export class Theme extends BaseComponent {
      * @returns {boolean}
      */
     #isChangeable(el) {
-        return ['select-one', 'radio', 'checkbox'].includes(el.type);
+        const type = 'type' in el ? /** @type {any} */ (el).type : '';
+
+        return ['select-one', 'radio', 'checkbox'].includes(type);
     }
 
     /** 
@@ -214,14 +228,22 @@ export class Theme extends BaseComponent {
      * @returns {boolean}
      */
     #isToggleable(el) {
-        return (el.type === 'checkbox' || (this.#isClickable(el)) && !hasAttribute(el, this.options.modeAttributeName));
+        const type = 'type' in el ? /** @type {any} */ (el).type : '';
+        
+        return (type === 'checkbox' || (this.#isClickable(el)) && !hasAttribute(el, this.options.modeAttributeName));
     }
 
+    /** @param {ThemeMode} mode  */
     #updateTriggerState(mode) {
         this.#getTriggers().forEach(trigger => {
-            if (trigger.type === 'checkbox') trigger.checked = mode === this.#modes.dark;
-            if (trigger.type === 'radio') trigger.checked = mode === this.#getMode(trigger);
-            if (trigger.type === 'select-one') trigger.value = mode;
+            if (trigger instanceof HTMLInputElement) {
+                if (trigger.type === 'checkbox') trigger.checked = mode === this.#modes.dark;
+                if (trigger.type === 'radio') trigger.checked = mode === this.#getMode(trigger);
+            }
+            
+            if (trigger instanceof HTMLSelectElement) {
+                if (trigger.type === 'select-one') trigger.value = mode;
+            }
 
             if (this.#isClickable(trigger) && hasAttribute(trigger, this.options.modeAttributeName)) {
                 const triggerMode = this.#getMode(trigger);
@@ -269,13 +291,13 @@ export class Theme extends BaseComponent {
 
         // Update DOM classes
         if (shouldAddDarkClass) {
-            addClasses(this.options.parent, this.options.className);
+            addClasses(this.el, this.options.className);
         } else {
-            removeClasses(this.options.parent, this.options.className);
+            removeClasses(this.el, this.options.className);
         }
 
         // Update attribute
-        setAttributes(this.options.parent, {
+        setAttributes(this.el, {
             [this.options.attributeName]: mode
         });
 
@@ -287,8 +309,8 @@ export class Theme extends BaseComponent {
 
     destroy() {
         this.#storage.remove(this.options.storageKey);
-        removeClasses(this.options.parent, this.options.className);
-        removeAttributes(this.options.parent, [this.options.attributeName]);
+        removeClasses(this.el, this.options.className);
+        removeAttributes(this.el, [this.options.attributeName]);
 
         this.#getTriggers().forEach(trigger => {
             if (this.#isClickable(trigger)) {
@@ -296,8 +318,13 @@ export class Theme extends BaseComponent {
             }
 
             if (this.#isChangeable(trigger)) {
-                if (trigger.type === 'select-one') trigger.selectedIndex = 0;
-                if (trigger.type === 'radio' || trigger.type === 'checkbox') trigger.checked = false;
+                if (trigger instanceof HTMLSelectElement) {
+                    if (trigger.type === 'select-one') trigger.selectedIndex = 0;
+                }
+
+                if (trigger instanceof HTMLInputElement) {
+                    if (trigger.type === 'radio' || trigger.type === 'checkbox') trigger.checked = false;
+                }
             }
         });
 

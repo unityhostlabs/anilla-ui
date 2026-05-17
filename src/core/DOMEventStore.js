@@ -6,16 +6,16 @@
  * at once on component destroy.
  */
 export class DOMEventStore {
-    /** @type {Array<{el: Element, type: string, handler: Function, options: any}>} */
+    /** @type {Array<{el: Element | Window | Document, type: string, handler: EventListenerOrEventListenerObject, options: any}>} */
     #entries = [];
 
     /**
      * Attach a native DOM listener and record it.
      * 
-     * @param {Element|Window|Document} el
+     * @param {Element | Window | Document} el
      * @param {string} type
-     * @param {Function} handler
-     * @param {boolean|AddEventListenerOptions} [options]
+     * @param {EventListenerOrEventListenerObject} handler
+     * @param {boolean | AddEventListenerOptions} [options]
      */
     add(el, type, handler, options) {
         el.addEventListener(type, handler, options);
@@ -25,9 +25,9 @@ export class DOMEventStore {
     /**
      * Remove a specific listener that was previously added through this store.
      * 
-     * @param {Element|Window|Document} el
+     * @param {Element | Window | Document} el
      * @param {string} type
-     * @param {Function} handler
+     * @param {EventListenerOrEventListenerObject} handler
      */
     remove(el, type, handler) {
         this.#entries = this.#entries.filter((entry) => {
@@ -54,7 +54,7 @@ export class DOMEventStore {
     /**
      * Return a snapshot of all recorded entries (read-only, for debugging).
      * 
-     * @returns {Readonly<Array<{el: Element, type: string, handler: Function, options: any}>>}
+     * @returns {Readonly<Array<{el: Element | Window | Document, type: string, handler: EventListenerOrEventListenerObject, options: any}>>}
      */
     getAll() {
         return Object.freeze([...this.#entries]);

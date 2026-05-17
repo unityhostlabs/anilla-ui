@@ -13,7 +13,7 @@ import { config, logger } from './config.js';
 
 let _uid = 0;
 
-/** @type {Map<string, BaseComponent>} */
+/** @type {Map<string, import('./BaseComponent.js').BaseComponent>} */
 const store = new Map();
 
 /**

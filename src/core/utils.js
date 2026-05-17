@@ -38,7 +38,7 @@ export function coerceType(value) {
  *   We then strip the component slug prefix and lowercase the first character:
  *   "modalActiveClass" → strip "modal" → "ActiveClass" → "activeClass" ✓
  *
- * @param {Element}              el        The DOM element to read from
+ * @param {HTMLElement}              el        The DOM element to read from
  * @param {string}               slug      Lowercase component name, e.g. 'modal'
  * @param {Record<string, any>}  defaults  The component's declared default options
  * @returns {Record<string, any>}
@@ -79,9 +79,12 @@ export function parseComponentDataAttributes(el, slug, defaults) {
  */
 export function interpolate(template, placeholders = {}) {
     return Object.keys(placeholders).reduce((result, token) => {
-        return result.replaceAll(`:${token}`, placeholders[token]);
+        // Force the value to a string using String() to safely satisfy replaceAll()
+        const value = String(placeholders[token]);
+        return result.replaceAll(`:${token}`, value);
     }, template);
 }
+
 
 /**
  * Split a space-separated class string and add each token.
@@ -112,10 +115,13 @@ export function removeClasses(el, classString) {
  * @returns {(K extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[K] : HTMLElement) | null}
  */
 export function query(selectorOrElement, context = document) {
-    if (selectorOrElement instanceof HTMLElement) return selectorOrElement;
+    if (selectorOrElement instanceof HTMLElement) {
+        return /** @type {any} */ (selectorOrElement);
+    }
 
-    return context.querySelector(selectorOrElement);
+    return /** @type {any} */ (context.querySelector(/** @type {any} */ (selectorOrElement)));
 }
+
 
 /**
  * Finds DOM elements by selector or returns from element map.
@@ -123,13 +129,16 @@ export function query(selectorOrElement, context = document) {
  * @template {keyof HTMLElementTagNameMap | string} K
  * @param {K | Map<string, HTMLElement>} selectorOrMap - CSS selector or Map of elements
  * @param {ParentNode} [context=document] - The root element to search within
- * @returns {Array<HTMLElement>}
+ * @returns {Array<K extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[K] : HTMLElement>}
  */
 export function queryAll(selectorOrMap, context = document) {
-    if (selectorOrMap instanceof Map) return Array.from(selectorOrMap.values());
+    if (selectorOrMap instanceof Map) {
+        return /** @type {any} */ (Array.from(selectorOrMap.values()));
+    }
 
-    return Array.from(context.querySelectorAll(selectorOrMap));
+    return /** @type {any} */ (Array.from(context.querySelectorAll(selectorOrMap)));
 }
+
 
 /**
  * Converts a string to a URL-friendly slug
@@ -155,7 +164,7 @@ export function slug(value) {
  * @returns {Array}
  */
 export function toArray(value, separator = ',') {
-    const arr = isString(value) 
+    const arr = typeof value === 'string' 
         ? value.split(separator).map(x => x.trim()).filter(x => x !== '')
         : value;
 

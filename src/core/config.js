@@ -43,6 +43,11 @@
  * @property {boolean} debug
  *   When true, enables verbose internal logging. Overrides logLevel to
  *   print everything including lifecycle events and registry operations.
+ * 
+ * @property {Function} _autoInitBoot
+ *   Internal callback used by AutoInit to trigger a scan when the app boots.
+ *   This is set by AutoInit and called by configure() if autoInit is enabled.
+ *   Not intended for external use.
  */
 
 /** @type {AnillaUIConfig} */
@@ -53,6 +58,7 @@ const defaults = {
     autoInit: false,
     logLevel: 'error',
     debug: false,
+    _autoInitBoot: () => void 0
 };
 
 /** @type {AnillaUIConfig} */

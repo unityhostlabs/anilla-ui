@@ -2,10 +2,10 @@ import { isEmpty } from './utils.js';
 
 /**
  * @typedef {Object} Options
- * @property {string} prefix The prefix for the storage keys.
- * @property {string} delimiter The delimiter for the storage keys.
- * @property {boolean} jsonEncode Whether to JSON encode values before storing.
- * @property {'local' | 'session'} storageType The type of storage to use.
+ * @property {string} [prefix] The prefix for the storage keys.
+ * @property {string} [delimiter] The delimiter for the storage keys.
+ * @property {boolean} [jsonEncode] Whether to JSON encode values before storing.
+ * @property {'local' | 'session'} [storageType] The type of storage to use.
  */
 
 /** @type {Options} */

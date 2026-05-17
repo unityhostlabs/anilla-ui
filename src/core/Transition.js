@@ -1,5 +1,15 @@
 import { addClasses, removeClasses } from './utils.js';
 
+/**
+ * @typedef {Object} TransitionOptions
+ * @property {string | null} [transitionEnter]
+ * @property {string | null} [transitionEnterFrom]
+ * @property {string | null} [transitionEnterTo]
+ * @property {string | null} [transitionLeave]
+ * @property {string | null} [transitionLeaveFrom]
+ * @property {string | null} [transitionLeaveTo]
+ */
+
 /** @type {TransitionOptions} */
 const defaults = {
     transitionEnter: null,
@@ -24,7 +34,7 @@ export class Transition {
     /**
      * Default transition option values.
      * 
-     * @returns {Record<string, null>}
+     * @returns {TransitionOptions}
      */
     static get defaults() {
         return defaults;
@@ -73,14 +83,16 @@ export class Transition {
      */
     state = 'idle';
 
-    /** @param {Record<string, string>} config */
+    /** 
+     * Constructor
+     * 
+     * @param {Record<string, string>} config 
+     * */
     constructor(config) {
         this.#config = config;
     }
 
-    // -------------------------------------------------------------------------
-    // State Helpers
-    // -------------------------------------------------------------------------
+    // --- Core
 
     /**
      * @param {TransitionState} state
@@ -88,57 +100,6 @@ export class Transition {
     #setState(state) {
         this.state = state;
     }
-
-    /**
-     * @returns {boolean}
-     */
-    isIdle() {
-        return this.state === 'idle';
-    }
-
-    /**
-     * @returns {boolean}
-     */
-    isEntering() {
-        return this.state === 'entering';
-    }
-
-    /**
-     * @returns {boolean}
-     */
-    isEntered() {
-        return this.state === 'entered';
-    }
-
-    /**
-     * @returns {boolean}
-     */
-    isLeaving() {
-        return this.state === 'leaving';
-    }
-
-    /**
-     * @returns {boolean}
-     */
-    isCancelled() {
-        return this.state === 'cancelled';
-    }
-
-    /**
-     * Whether a transition is currently active.
-     * 
-     * @returns {boolean}
-     */
-    isBusy() {
-        return (
-            this.isEntering() ||
-            this.isLeaving()
-        );
-    }
-
-    // -------------------------------------------------------------------------
-    // Internal Helpers
-    // -------------------------------------------------------------------------
 
     /**
      * Remove all classes associated with an effect.
@@ -173,7 +134,7 @@ export class Transition {
      * @param {(e: TransitionEvent|AnimationEvent) => void} [callback]
      * @returns {boolean}
      */
-    _execute(effect, element, callback) {
+    #execute(effect, element, callback) {
         const base = this.#config[effect];
         const from = this.#config[`${effect}From`];
         const to = this.#config[`${effect}To`];
@@ -240,6 +201,8 @@ export class Transition {
         element.addEventListener(
             this.event('end'),
             (e) => {
+                const evt = /** @type {TransitionEvent | AnimationEvent} */ (e);
+
                 // Ignore stale transitions.
                 if (transitionId !== this.#transitionId) return;
 
@@ -253,7 +216,7 @@ export class Transition {
                 );
 
                 if (typeof callback === 'function') {
-                    callback(e);
+                    callback(evt);
                 }
             },
             {
@@ -281,9 +244,7 @@ export class Transition {
         return true;
     }
 
-    // -------------------------------------------------------------------------
-    // Public API
-    // -------------------------------------------------------------------------
+    // --- Public API
 
     /**
      * Run enter transition.
@@ -293,7 +254,7 @@ export class Transition {
      * @returns {boolean}
      */
     enter(element, callback) {
-        return this._execute('transitionEnter', element, callback);
+        return this.#execute('transitionEnter', element, callback);
     }
 
     /**
@@ -304,7 +265,7 @@ export class Transition {
      * @returns {boolean}
      */
     leave(element, callback) {
-        return this._execute('transitionLeave', element, callback);
+        return this.#execute('transitionLeave', element, callback);
     }
 
     /**
@@ -347,5 +308,54 @@ export class Transition {
      */
     event(phase) {
         return `${this.type}${phase}`;
+    }
+
+    // --- Public Accessors
+
+    /**
+     * @returns {boolean}
+     */
+    get isIdle() {
+        return this.state === 'idle';
+    }
+
+    /**
+     * @returns {boolean}
+     */
+    get isEntering() {
+        return this.state === 'entering';
+    }
+
+    /**
+     * @returns {boolean}
+     */
+    get isEntered() {
+        return this.state === 'entered';
+    }
+
+    /**
+     * @returns {boolean}
+     */
+    get isLeaving() {
+        return this.state === 'leaving';
+    }
+
+    /**
+     * @returns {boolean}
+     */
+    get isCancelled() {
+        return this.state === 'cancelled';
+    }
+
+    /**
+     * Whether a transition is currently active.
+     * 
+     * @returns {boolean}
+     */
+    get isBusy() {
+        return (
+            this.isEntering ||
+            this.isLeaving
+        );
     }
 }

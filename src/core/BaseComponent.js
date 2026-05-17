@@ -6,6 +6,17 @@ import { config, logger } from './config.js';
 import { parseComponentDataAttributes } from './utils.js';
 
 /**
+ * Shortcut for all standard browser events including Window-specific ones
+ * @typedef {GlobalEventHandlersEventMap & WindowEventHandlersEventMap} BrowserEvents
+ */
+
+/**
+ * Reusable handler using the shortcut
+ * @template {keyof BrowserEvents} K
+ * @typedef {(this: any, ev: BrowserEvents[K]) => any} DOMEventHandler
+ */
+
+/**
  * BaseComponent
  *
  * The foundation every component extends. Handles:
@@ -50,7 +61,7 @@ export class BaseComponent {
      * Called automatically by AutoInit. Can also be used manually:
      *   const opts = Modal.parseDataAttributes(el);
      *
-     * @param {Element} el
+     * @param {HTMLElement} el
      * @returns {Record<string, any>}
      */
     static parseDataAttributes(el) {
@@ -64,7 +75,7 @@ export class BaseComponent {
 
     // --- Private State
 
-    /** @type {Element} */
+    /** @type {HTMLElement} */
     #el;
 
     /** @type {O} */
@@ -88,23 +99,23 @@ export class BaseComponent {
      * @param {string|Element} target CSS selector string or DOM Element.
      * @param {O} [options]
      */
-    constructor(target, options = {}) {
+    constructor(target, options = /** @type {O} */ ({})) {
         // Resolve element
         if (typeof target === 'string') {
             const el = document.querySelector(target);
 
             if (!el) {
                 throw new Error(
-                    `[${config.name} / ${this.constructor.componentName}] No element found for selector "${target}".`
+                    `[${config.name} / ${this.name}] No element found for selector "${target}".`
                 );
             }
 
-            this.#el = el;
+            this.#el = /** @type {HTMLElement} */ (el);
         } else if (target instanceof Element) {
-            this.#el = target;
+            this.#el = /** @type {HTMLElement} */ (target);
         } else {
             throw new TypeError(
-                `[${config.name} / ${this.constructor.componentName}] First argument must be a CSS selector string or an Element.`
+                `[${config.name} / ${this.name}] First argument must be a CSS selector string or an Element.`
             );
         }
 
@@ -117,9 +128,11 @@ export class BaseComponent {
         // element in the HTML, making them the most intentional declaration.
         // This means data-dropdown-trigger="#btn" will always override
         // new Dropdown(el, { trigger: '#other' }) for that element.
-        const dataOptions = this.constructor.parseDataAttributes(this.#el);
+        const staticConstructor = /** @type {typeof BaseComponent} */ (this.constructor);
+        const dataOptions = staticConstructor.parseDataAttributes(this.#el);
+        
         this.#options = {
-            ...this.constructor.defaults,
+            ...staticConstructor.defaults,
             ...options,
             ...dataOptions,
         };
@@ -128,12 +141,22 @@ export class BaseComponent {
         this.#transition = new Transition(this.#options);
 
         // Register in global store so it can be retrieved later
-        Registry.set(this.#el, this.constructor.componentName, this);
+        Registry.set(this.#el, this.name, this);
 
-        logger.info(`${this.constructor.componentName}: initialized`, this.#el);
+        logger.info(`${this.name}: initialized`, this.#el);
     }
 
     // --- Public Accessors
+
+    /**
+     * Get the component name dynamically from the constructor.
+     * 
+     * @type {string}
+     */
+    get name() {
+        // @ts-ignore - tells the IDE to ignore static constructor properties
+        return this.constructor.componentName;
+    }
 
     /** The root DOM element this component is bound to. */
     get el() {
@@ -143,7 +166,7 @@ export class BaseComponent {
     /** 
      * Merged options object (static defaults + user options).
      * 
-     * @returns {O & TransitionOptions} 
+     * @returns {O & import('./Transition.js').TransitionOptions}
      */
     get options() {
         return this.#options;
@@ -167,7 +190,7 @@ export class BaseComponent {
     /**
      * Subscribe to a component lifecycle / custom event.
      * 
-     * @param {keyof T} event
+     * @param {Extract<keyof T, string> | 'destroy'} event
      * @param {(...args: any[]) => void} handler
      * @returns {() => void}
      */
@@ -178,7 +201,7 @@ export class BaseComponent {
     /**
      * Subscribe to a component event exactly once.
      * 
-     * @param {keyof T} event
+     * @param {Extract<keyof T, string> | 'destroy'} event
      * @param {(...args: any[]) => void} handler
      * @returns {() => void}
      */
@@ -190,24 +213,12 @@ export class BaseComponent {
      * Unsubscribe from a component event.
      * If handler is omitted, all handlers for the event will be removed.
      * 
-     * @param {keyof T} event
+     * @param {Extract<keyof T, string> | 'destroy'} event
      * @param {(...args: any[]) => void} [handler]
      */
     off(event, handler) {
         this.#bus.off(event, handler);
     }
-
-    /**
-     * Emit a component event.
-     * Event handlers will receive any additional arguments passed to emit() after the event name.
-     * For example: this.emit('open', data) will pass data to all handlers subscribed to 'open'.
-     * 
-     * @param {keyof T} event 
-     * @param {...any} args
-     */
-    // emit(event, ...args) {
-    //     this.#bus.emit(event, ...args);
-    // }
 
     /**
      * Emit a component event.
@@ -235,7 +246,7 @@ export class BaseComponent {
      *
      * The CustomEvent bubbles by default so parent elements can also listen.
      *
-     * @param {keyof T} event
+     * @param {Extract<keyof T, string> | 'destroy'} event
      * @param {...any} args
      */
     emit(event, ...args) {
@@ -274,7 +285,7 @@ export class BaseComponent {
      * Prefer this over bare addEventListener inside subclasses.
      *
      * @template {keyof BrowserEvents} K
-     * @param {Element|Window|Document} el
+     * @param {Element | Window | Document} el
      * @param {K} type
      * @param {DOMEventHandler<K>} handler
      * @param {boolean|AddEventListenerOptions} [options]
@@ -300,7 +311,7 @@ export class BaseComponent {
      * Return a read-only snapshot of all tracked DOM listeners.
      * Useful for debugging or introspection.
      * 
-     * @returns {Readonly<Array<{el: Element, type: string, handler: Function}>>}
+     * @returns {Readonly<Array<{ el: Element | Window | Document | MediaQueryList, type: string, handler: EventListenerOrEventListenerObject, options?: any }>>}
      */
     get domEvents() {
         return this.#domEvents.getAll();
@@ -327,8 +338,8 @@ export class BaseComponent {
         this.#bus.clear();
 
         // Remove from registry
-        Registry.delete(this.#el, this.constructor.componentName);
-        logger.info(`${this.constructor.componentName}: destroyed`, this.#el);
+        Registry.delete(this.#el, this.name);
+        logger.info(`${this.name}: destroyed`, this.#el);
     }
 
     // --- Static Factory Helpers 
