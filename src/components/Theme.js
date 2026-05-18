@@ -110,11 +110,7 @@ export class Theme extends BaseComponent {
             const e = /** @type {MediaQueryListEvent} */ (event);
             
             if (this.#getTheme() === this.#modes.auto) {
-                if (e.matches) {
-                    addClasses(this.el, this.options.className);
-                } else {
-                    removeClasses(this.el, this.options.className);
-                }
+                this.change(this.#getTheme());
             }
         });
 
@@ -230,10 +226,17 @@ export class Theme extends BaseComponent {
 
     /** @param {ThemeMode} mode  */
     #updateTriggerState(mode) {
+        const isDarkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
         this.#getTriggers().forEach(trigger => {
             if (trigger instanceof HTMLInputElement) {
-                if (trigger.type === 'checkbox') trigger.checked = mode === this.#modes.dark;
                 if (trigger.type === 'radio') trigger.checked = mode === this.#getMode(trigger);
+
+                if (trigger.type === 'checkbox') {
+                    trigger.checked = mode === this.#modes.auto 
+                        ? isDarkPreferred
+                        : mode === this.#modes.dark;
+                }
             }
             
             if (trigger instanceof HTMLSelectElement) {
@@ -250,7 +253,10 @@ export class Theme extends BaseComponent {
 
             if (this.#isClickable(trigger) && this.#isToggleable(trigger)) {
                 setAttributes(trigger, {
-                    ariaPressed: mode === this.#modes.dark
+                    // ariaPressed: mode === this.#modes.dark
+                    ariaPressed: mode === this.#modes.auto 
+                        ? isDarkPreferred
+                        : mode === this.#modes.dark
                 });
             }
 
@@ -258,6 +264,7 @@ export class Theme extends BaseComponent {
                 const label = interpolate(this.options.label, { 
                         mode: mode === this.#modes.dark ? this.#modes.light : this.#modes.dark
                     });
+
                 setAttributes(trigger, {
                     ariaLabel: label,
                     title: { condition: this.options.showTitle, value: label }
@@ -296,9 +303,7 @@ export class Theme extends BaseComponent {
             [this.options.attributeName]: mode
         });
 
-        // Update trigger state
         this.#updateTriggerState(mode);
-
         this.emit('change');
     }
 
