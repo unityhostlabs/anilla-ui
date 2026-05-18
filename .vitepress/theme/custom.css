@@ -21,6 +21,13 @@
     }
 }
 
+.vp-doc tr,
+.vp-doc tr:nth-child(2n) {
+    background-color: transparent;
+    /* background-color: var(--vp-c-bg-soft); */
+}
+
+
 @media (min-width: 960px) {
     .vp-doc table {
         display: table;

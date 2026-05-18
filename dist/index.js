@@ -1484,9 +1484,7 @@ var Theme = class extends BaseComponent {
 		});
 		const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 		this.addListener(mediaQuery, "change", (event) => {
-			const e = event;
-			if (this.#getTheme() === this.#modes.auto) if (e.matches) addClasses(this.el, this.options.className);
-			else removeClasses(this.el, this.options.className);
+			if (this.#getTheme() === this.#modes.auto) this.change(this.#getTheme());
 		});
 		this.addListener(window, "storage", (e) => {
 			if (this.options.storageKey === e.key) {
@@ -1566,16 +1564,17 @@ var Theme = class extends BaseComponent {
 	}
 	/** @param {ThemeMode} mode  */
 	#updateTriggerState(mode) {
+		const isDarkPreferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
 		this.#getTriggers().forEach((trigger) => {
 			if (trigger instanceof HTMLInputElement) {
-				if (trigger.type === "checkbox") trigger.checked = mode === this.#modes.dark;
 				if (trigger.type === "radio") trigger.checked = mode === this.#getMode(trigger);
+				if (trigger.type === "checkbox") trigger.checked = mode === this.#modes.auto ? isDarkPreferred : mode === this.#modes.dark;
 			}
 			if (trigger instanceof HTMLSelectElement) {
 				if (trigger.type === "select-one") trigger.value = mode;
 			}
 			if (this.#isClickable(trigger) && hasAttribute(trigger, this.options.modeAttributeName)) setAttributes(trigger, { ariaPressed: this.#getMode(trigger) === mode });
-			if (this.#isClickable(trigger) && this.#isToggleable(trigger)) setAttributes(trigger, { ariaPressed: mode === this.#modes.dark });
+			if (this.#isClickable(trigger) && this.#isToggleable(trigger)) setAttributes(trigger, { ariaPressed: mode === this.#modes.auto ? isDarkPreferred : mode === this.#modes.dark });
 			if (this.#isToggleable(trigger)) {
 				const label = interpolate(this.options.label, { mode: mode === this.#modes.dark ? this.#modes.light : this.#modes.dark });
 				setAttributes(trigger, {
