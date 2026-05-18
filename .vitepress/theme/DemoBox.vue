@@ -191,7 +191,7 @@ iframe {
     transition: background-color 0.2s ease;
 }
 
-.resize-handle:hover::before {
+.resize-handle:hover::before, .resize-handle:active::before {
     background-color: var(--vp-c-brand-1, #3eaf7c);
 }
 </style>

@@ -228,7 +228,7 @@ You can listen for events with an internal or external approach. The internal li
 
 ##### `change`
 
-<small>*Parameters:* `instance: Theme`</small>
+<small>*Parameters:* `{ instance }`</small>
 
 Fired when the theme changes.
 
@@ -238,24 +238,25 @@ Fired when the theme changes.
 const theme = new Theme(element, options);
 
 // Internal listener example
-theme.on('change', (instance) => {
+theme.on('change', ({ instance }) => {
     console.log(instance);
 });
 
 // External listener example
 element.addEventListener('ui:change', (e) => {
-    console.log(e.detail.instance);
+    const { instance } = e.detail;
+    console.log(instance);
 });
 ```
 
 #### Callbacks
 
-You can invoke callbacks with event names by prefixing them with `on` followed by a capitalized name of the event like `onChange`. Event with parameters will be passed as function arguments.
+You can invoke callbacks with event names by prefixing them with `on` followed by a capitalized name of the event like `onChange`.
 
 ```js
 const theme = new Theme(element, {
     ...,
-    onChange: (instance) => {
+    onChange: ({ instance }) => {
         console.log(instance);
     }
 });

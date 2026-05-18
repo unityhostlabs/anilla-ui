@@ -1,7 +1,6 @@
 import { BaseComponent } from '../core/BaseComponent.js';
 import { DataStorage } from '../core/DataStorage.js';
 import { 
-    query, 
     queryAll,
     isEmpty, 
     objectHasValue, 
@@ -26,7 +25,6 @@ import {
  * @property {string} [modeAttributeName] The data attribute name to store the current theme mode on the trigger element.
  * @property {string} [label] The label template for the trigger element, where :mode will be replaced with the current mode.
  * @property {boolean} [showTitle] Whether to show the title attribute on the trigger element.
- * @property {boolean} [listenToStorage] Whether to listen to storage events for theme changes across tabs.
  * @property {string} [storageKey] The key used to store the theme mode in localStorage.
  * @property {string} [className] The CSS class name for the dark theme.
  */
@@ -39,7 +37,6 @@ const defaults = {
     modeAttributeName: 'data-mode',
     label: 'Switch to :mode theme',
     showTitle: false,
-    listenToStorage: true,
     storageKey: 'theme',
     className: 'dark'
 };
@@ -121,14 +118,12 @@ export class Theme extends BaseComponent {
             }
         });
 
-        if (this.options.listenToStorage) {            
-            this.addListener(window, 'storage', (e) => {
-                if (this.options.storageKey === e.key) {
-                    const mode = /** @type {ThemeMode} */ (e.newValue || this.#modes.auto);
-                    this.change(mode);
-                }
-            });
-        }
+        this.addListener(window, 'storage', (e) => {
+            if (this.options.storageKey === e.key) {
+                const mode = /** @type {ThemeMode} */ (e.newValue || this.#modes.auto);
+                this.change(mode);
+            }
+        });
      
         // Set initial attributes
         setAttributes(this.el, {
@@ -304,7 +299,7 @@ export class Theme extends BaseComponent {
         // Update trigger state
         this.#updateTriggerState(mode);
 
-        this.emit('change', this);
+        this.emit('change');
     }
 
     destroy() {

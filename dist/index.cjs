@@ -999,6 +999,14 @@ var Transition = class {
 * @typedef {(this: any, ev: BrowserEvents[K]) => any} DOMEventHandler
 */
 /**
+* Dynamically creates callback hooks from an event map.
+* Takes 'change' and turns it into 'onChange?: (payload: { instance: any } & T['change']) => void'
+* 
+* @template {Record<string, any>} T
+* @template ComponentInstance
+* @typedef {{ [K in Extract<keyof T, string> as `on${Capitalize<K>}`]?: (payload: { instance: ComponentInstance } & T[K]) => void } & { onDestroy?: (payload: { instance: ComponentInstance }) => void }} EventCallbacks
+*/
+/**
 * BaseComponent
 *
 * The foundation every component extends. Handles:
@@ -1052,7 +1060,7 @@ var BaseComponent = class {
 	}
 	/** @type {HTMLElement} */
 	#el;
-	/** @type {O} */
+	/** @type {O & EventCallbacks<T, any>} */
 	#options;
 	/** @type {EventBus} */
 	#bus = new EventBus();
@@ -1101,7 +1109,7 @@ var BaseComponent = class {
 	/** 
 	* Merged options object (static defaults + user options).
 	* 
-	* @returns {O & import('./Transition.js').TransitionOptions}
+	* @returns {O & EventCallbacks<T, any> & import('./Transition.js').TransitionOptions}
 	*/
 	get options() {
 		return this.#options;
@@ -1148,42 +1156,54 @@ var BaseComponent = class {
 		this.#bus.off(event, handler);
 	}
 	/**
-	* Emit a component event.
+	* Emit a component event using a unified payload object.
 	*
-	* Fires on two pipelines simultaneously:
+	* Fires on three pipelines simultaneously:
 	*   1. Internal EventBus  — reaches listeners registered via this.on()
 	*   2. Native DOM event   — reaches listeners registered via element.addEventListener()
+	*   3. Config Callbacks   — reaches hooks declared in configuration (e.g., onChange)
 	*
-	* The native CustomEvent carries all extra arguments merged into a
-	* `detail` object alongside the component instance:
-	*
-	*   this.emit('change', { from: 'a', to: 'b' })
-	*
-	*   // EventBus listener
-	*   modal.on('change', (payload) => payload)  // { from: 'a', to: 'b' }
-	*
-	*   // DOM listener
-	*   el.addEventListener('ui:change', (e) => e.detail)
-	*   // { instance: modal, from: 'a', to: 'b' }
-	*
+	* Every pipeline receives a single, flattened payload object. The base class 
+	* automatically injects the component instance as the `instance` property.
+	* 
 	* The native event name is prefixed with config.dataPrefix + ':' to avoid
 	* collisions with built-in DOM events:
-	*   'change' → 'ui:change'
-	*   'shown'  → 'ui:shown'
+	* -  'change' → 'ui:change'
+	* -  'destroy' → 'ui:destroy'
 	*
 	* The CustomEvent bubbles by default so parent elements can also listen.
+	* 
+	* @example
+	*   this.emit('change', { from: 'light', to: 'dark' });
 	*
-	* @param {Extract<keyof T, string> | 'destroy'} event
-	* @param {...any} args
+	*   // 1. EventBus listener (using object destructuring)
+	*   theme.on('change', ({ instance, from, to }) => { ... });
+	*
+	*   // 2. Native DOM listener (reads directly from e.detail)
+	*   el.addEventListener('ui:change', (e) => {
+	*       const { instance, from, to } = e.detail;
+	*   });
+	*
+	*   // 3. Programmatic Configuration Callback
+	*   new Theme('#el', {
+	*       onChange: ({ instance, from, to }) => { ... }
+	*   });
+	*
+	* @param {Extract<keyof T, string> | 'destroy'} event - Custom event name or core lifecycle event
+	* @param {Record<string, any>} [payload={}] - Additional event parameters to merge alongside the instance
 	*/
-	emit(event, ...args) {
-		this.#bus.emit(event, ...args);
-		const detail = Object.assign({ instance: this }, ...args.map((arg) => arg !== null && typeof arg === "object" && !Array.isArray(arg) ? arg : { data: arg }));
-		this.#el.dispatchEvent(new CustomEvent(`${config.dataPrefix}:${event}`, {
-			detail,
+	emit(event, payload = {}) {
+		const unifiedPayload = Object.assign({ instance: this }, payload);
+		this.#bus.emit(String(event), unifiedPayload);
+		this.#el.dispatchEvent(new CustomEvent(`${config.dataPrefix}:${String(event)}`, {
+			detail: unifiedPayload,
 			bubbles: true,
 			cancelable: true
 		}));
+		const eventStr = String(event);
+		const callbackKey = `on${eventStr.charAt(0).toUpperCase()}${eventStr.slice(1)}`;
+		const callback = this.options[callbackKey];
+		if (typeof callback === "function") callback(unifiedPayload);
 	}
 	/**
 	* Return all currently subscribed event names on this instance's bus.
@@ -1404,7 +1424,6 @@ var DataStorage = class {
 * @property {string} [modeAttributeName] The data attribute name to store the current theme mode on the trigger element.
 * @property {string} [label] The label template for the trigger element, where :mode will be replaced with the current mode.
 * @property {boolean} [showTitle] Whether to show the title attribute on the trigger element.
-* @property {boolean} [listenToStorage] Whether to listen to storage events for theme changes across tabs.
 * @property {string} [storageKey] The key used to store the theme mode in localStorage.
 * @property {string} [className] The CSS class name for the dark theme.
 */
@@ -1416,7 +1435,6 @@ const defaults = {
 	modeAttributeName: "data-mode",
 	label: "Switch to :mode theme",
 	showTitle: false,
-	listenToStorage: true,
 	storageKey: "theme",
 	className: "dark"
 };
@@ -1471,7 +1489,7 @@ var Theme = class extends BaseComponent {
 			if (this.#getTheme() === this.#modes.auto) if (e.matches) addClasses(this.el, this.options.className);
 			else removeClasses(this.el, this.options.className);
 		});
-		if (this.options.listenToStorage) this.addListener(window, "storage", (e) => {
+		this.addListener(window, "storage", (e) => {
 			if (this.options.storageKey === e.key) {
 				const mode = e.newValue || this.#modes.auto;
 				this.change(mode);
@@ -1585,7 +1603,7 @@ var Theme = class extends BaseComponent {
 		else removeClasses(this.el, this.options.className);
 		setAttributes(this.el, { [this.options.attributeName]: mode });
 		this.#updateTriggerState(mode);
-		this.emit("change", this);
+		this.emit("change");
 	}
 	destroy() {
 		this.#storage.remove(this.options.storageKey);
