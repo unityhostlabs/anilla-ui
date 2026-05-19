@@ -224,6 +224,9 @@
   .static {
     position: static;
   }
+  .isolate {
+    isolation: isolate;
+  }
   .container {
     width: 100%;
     @media (width >= 40rem) {

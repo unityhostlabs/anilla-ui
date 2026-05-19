@@ -1,5 +1,5 @@
 /node_modules
-/docs/.vitepress/cache
 /.vitepress/cache
 /.vitepress/dist
+/docs/.vitepress
 debug.log
