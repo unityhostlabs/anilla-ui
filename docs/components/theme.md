@@ -48,7 +48,7 @@ When using radio inputs as triggers, the component uses the `value` attributes t
 
 #### Select Input
 
-The `value` attribute of the `<option>` tag of a single `<select>` input is used by the component to determine your preferred theme mode.
+The `value` attribute of the `<option>` element of a single `<select>` input is used by the component to determine your preferred theme mode.
 
 <DemoBox src="/demos/theme/selection-select-input.html"/>
 
@@ -62,7 +62,7 @@ The `value` attribute of the `<option>` tag of a single `<select>` input is used
 
 #### Buttons or Links
 
-Multiple `<button>` and `<a>` tags can be used to setup choice selection triggers. To set the preferred theme mode on these elements, add `data-mode="{light|dark|auto}"` data attribute to the trigger element. A `<button>` or `<a>` tag can be styled based on the state of their `aria-pressed="{true|false}"` and `aria-current="{true|false}"` attributes.
+Multiple `<button>` and `<a>` elements can be used to setup choice selection triggers. To set the preferred theme mode on these elements, add `data-mode="{light|dark|auto}"` data attribute to the trigger element. A `<button>` or `<a>` element can be styled based on the state of their `aria-pressed="{true|false}"` attribute.
 
 <DemoBox src="/demos/theme/selection-buttons-links.html"/>
 
@@ -74,7 +74,7 @@ Multiple `<button>` and `<a>` tags can be used to setup choice selection trigger
 
 ## Toggle Triggers
 
-Checkboxes have only two states and are therefore considered toggle triggers. A `<button>` or `<a>` tag without a `data-mode="{light|dark|auto}"` data attribute is also considered a toggle trigger. Toggle triggers only have `light` and `dark` modes. The `dark` mode is enabled when `<input type="checkbox">` is `:checked` or a `<button>` or `<a>` is pressed. If a trigger is set to `auto`, or if a toggle trigger has not been interacted with yet, no preference is saved to `localStorage`. In this state, the component automatically determines the theme based on the user's system-preferred theme.
+Checkboxes have only two states and are therefore considered toggle triggers. A `<button>` or `<a>` element without a `data-mode="{light|dark|auto}"` data attribute is also considered a toggle trigger. Toggle triggers only have `light` and `dark` modes. The `dark` mode is enabled when `<input type="checkbox">` is `:checked` or a `<button>` or `<a>` is pressed. If a trigger is set to `auto`, or if a toggle trigger has not been interacted with yet, no preference is saved to `localStorage`. In this state, the component automatically determines the theme based on the user's system-preferred theme.
 
 <DemoBox src="/demos/theme/toggle-triggers.html"/>
 

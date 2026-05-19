@@ -18,6 +18,11 @@ import {
  */
 
 /**
+ * @typedef {Object} ThemeEvents
+ * @property {{instance: Theme}} change Fired when the theme changes.
+ */
+
+/**
  * @typedef {Object} ThemeOptions
  * @property {string} [trigger] The element or selector that triggers the theme change.
  * @property {ThemeMode | string} [autoModeName] The name of the auto mode.
@@ -40,11 +45,6 @@ const defaults = {
     storageKey: 'theme',
     className: 'dark'
 };
-
-/**
- * @typedef {Object} ThemeEvents
- * @property {(instance: Theme) => void} change Fired when the theme changes.
- */
 
 /**
  * @extends {BaseComponent<ThemeEvents, typeof defaults>}
