@@ -119,7 +119,11 @@ export function query(selectorOrElement, context = document) {
         return /** @type {any} */ (selectorOrElement);
     }
 
-    return /** @type {any} */ (context.querySelector(/** @type {any} */ (selectorOrElement)));
+    try {
+        return context.querySelector(selectorOrElement);
+    } catch (error) {
+        return null;
+    }
 }
 
 
@@ -136,7 +140,11 @@ export function queryAll(selectorOrMap, context = document) {
         return /** @type {any} */ (Array.from(selectorOrMap.values()));
     }
 
-    return /** @type {any} */ (Array.from(context.querySelectorAll(selectorOrMap)));
+    try {
+        return Array.from(context.querySelectorAll(selectorOrMap));
+    } catch (error) {
+        return [];
+    }
 }
 
 

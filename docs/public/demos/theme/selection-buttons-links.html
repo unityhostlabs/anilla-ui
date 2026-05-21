@@ -25,11 +25,20 @@
     </script>
 </head>
 <body>
-    <div class="flex flex-col justify-center h-screen p-6">
+    <div class="flex flex-col justify-center h-screen p-4">
         <div class="flex items-center justify-center gap-6 w-full max-w-lg mx-auto">
-            <button type="button" class="btn btn-info aria-pressed:inset-shadow-sm/70" data-mode="light" theme-trigger>Light</button>
-            <button type="button" class="btn btn-brand aria-pressed:inset-shadow-sm/70" data-mode="dark" theme-trigger>Dark</button>
-            <a href="#" class="btn btn-default aria-pressed:inset-shadow-sm/70" data-mode="auto" theme-trigger>Auto</a>
+            <button type="button" class="btn btn-default group" data-mode="light" theme-trigger>
+                <span class="hidden group-aria-pressed:inline mr-1">&#8594; </span>
+                Light
+            </button>
+            <button type="button" class="btn btn-default group" data-mode="dark" theme-trigger>
+                <span class="hidden group-aria-pressed:inline mr-1">&#8594; </span>
+                Dark
+            </button>
+            <a href="#" class="btn btn-default group" data-mode="auto" theme-trigger>
+                <span class="hidden group-aria-pressed:inline mr-1">&#8594; </span>
+                Auto
+            </a>
         </div>
     </div>
 </body>

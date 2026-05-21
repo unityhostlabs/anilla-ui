@@ -1,14 +1,14 @@
 # Theme
 
-A theme component for switching between light, dark and auto or a system-preferred theme.
+A theme component for switching between light, dark and auto or a system preferred theme.
 
 ## Introduction
 
-The Theme component adds a class and data attribute to a parent element through a trigger or system preference. You can then use CSS selectors to style child elements based on the theme class and data attribute applied to the parent element. The supported trigger elements are `<button>`, `<a>`, `<input type="checkbox">`, `<input type="radio">` and single `<select>` inputs.
+The Theme component adds a class and data attribute to a parent element through a trigger or system preference. You can then use CSS selectors to style child elements based on the theme class and data attribute applied to the parent element. The supported trigger elements are `<button>`, `<a>`, `<input type="checkbox">`, `<input type="radio">` and single `<select>`.
 
 ## Usage
 
-To initialize the Theme component on a parent element through the use of data attributes, add `data-ui-theme="true"` to enable the component. Add `data-theme-trigger="{selector}"` Theme option to the same element, where `selector` is a valid <!--@include: @/partials/css-ref.md--> to reference supported trigger elements.
+To initialize the Theme component on a parent element through the use of data attributes, add `data-ui-theme="true"` to enable the component. Add `data-theme-trigger="{selector}"` Theme option to the same element, where `{selector}` is a valid <!--@include: @/partials/css-ref.md--> pointing to supported trigger elements.
 
 ```html
 <html lang="en" data-ui-theme="enable" data-theme-trigger=".theme-trigger">
@@ -29,7 +29,7 @@ To initialize the Theme component on a parent element through the use of data at
 
 When using radio inputs as triggers, the component uses the `value` attributes to determine your preferred theme mode.
 
-<DemoBox src="/demos/theme/selection-radio-input.html"/>
+<DemoBox src="/demos/theme/selection-radio-input.html" :show-theme="false"/>
 
 ```html
 <label>
@@ -48,9 +48,9 @@ When using radio inputs as triggers, the component uses the `value` attributes t
 
 #### Select Input
 
-The `value` attribute of the `<option>` element of a single `<select>` input is used by the component to determine your preferred theme mode.
+The `value` attribute of the `<option>` tag of a single `<select>` input, is used by the component to determine your preferred theme mode.
 
-<DemoBox src="/demos/theme/selection-select-input.html"/>
+<DemoBox src="/demos/theme/selection-select-input.html" :show-theme="false"/>
 
 ```html
 <select class="theme-trigger" title="Select theme">
@@ -62,9 +62,9 @@ The `value` attribute of the `<option>` element of a single `<select>` input is 
 
 #### Buttons or Links
 
-Multiple `<button>` and `<a>` elements can be used to setup choice selection triggers. To set the preferred theme mode on these elements, add `data-mode="{light|dark|auto}"` data attribute to the trigger element. A `<button>` or `<a>` element can be styled based on the state of their `aria-pressed="{true|false}"` attribute.
+Multiple `<button>` and `<a>` tags can be used to setup choice selection triggers. To set the preferred theme mode on these elements, add `data-mode="{light|dark|auto}"` data attribute to the trigger element. A `<button>` or `<a>` tag can be styled based on the state of their `aria-pressed="{true|false}"` and `aria-current="{true|false}"` attributes.
 
-<DemoBox src="/demos/theme/selection-buttons-links.html"/>
+<DemoBox src="/demos/theme/selection-buttons-links.html" :show-theme="false"/>
 
 ```html
 <button type="button" class="theme-trigger" data-mode="light">Light</button>
@@ -74,9 +74,9 @@ Multiple `<button>` and `<a>` elements can be used to setup choice selection tri
 
 ## Toggle Triggers
 
-Checkboxes have only two states and are therefore considered toggle triggers. A `<button>` or `<a>` element without a `data-mode="{light|dark|auto}"` data attribute is also considered a toggle trigger. Toggle triggers only have `light` and `dark` modes. The `dark` mode is enabled when `<input type="checkbox">` is `:checked` or a `<button>` or `<a>` is pressed. If a trigger is set to `auto`, or if a toggle trigger has not been interacted with yet, no preference is saved to `localStorage`. In this state, the component automatically determines the theme based on the user's system-preferred theme.
+Checkboxes have only two states and are therefore considered toggle triggers. Single `<button>` or `<a>` tags without a `data-mode="{light|dark|auto}"` data attribute are also considered as toggles. Toggle triggers only have `light` and `dark` modes. The `dark` mode is enabled when `<input type="checkbox">` is `:checked` or a `<button>` or `<a>` is pressed.
 
-<DemoBox src="/demos/theme/toggle-triggers.html"/>
+<DemoBox src="/demos/theme/toggle-triggers.html" :show-theme="false"/>
 
 ```html
 <label>
@@ -86,29 +86,9 @@ Checkboxes have only two states and are therefore considered toggle triggers. A 
 <button type="button" class="theme-trigger">Toggle Mode</button>
 ```
 
-## Multiple Instances
-
-The Theme component relies on `localStorage` to persist the active theme. When multiple instances are initialized using the same or default `storageKey` [option](#component-options), they will share and overwrite the same stored preference. To isolate each instance, you must provide a unique `storageKey` for each one.
-
-```js
-// Instance one
-const theme1 = new Theme(element1, {
-    storageKey: 'theme-one'
-});
-
-// Instance two
-const theme2 = new Theme(element2, {
-    storageKey: 'theme-two'
-});
-```
-
 ## Light Theme Flash Fix
 
-To prevent a flash of the light theme before `dark` mode loads, you must apply the theme preference before the browser renders the page. Add the following JavaScript within the `<head>` element of your pages to apply the theme before the component initializes. 
-
-Because the `auto` mode is handled implicitly when no theme preference is saved in `localStorage`, the script checks if `dark` is explicitly stored, or if no preference exists while the system preference is dark.
-
-The `<html>` element (`document.documentElement`) is used in this example. You can change this to match whichever parent element you apply the Theme component to.
+To fix the light theme flash before `dark` mode loads, you must apply the theme preference before the browser renders the page. Add the following JavaScript in between the `<head>` tag of your pages to apply the theme before the component loads. The `<html>` element or `document.documentElement` was used in this example. You can however change it to the parent element you apply the Theme component to.
 
 ```html
 <script>
@@ -132,7 +112,7 @@ The `<html>` element (`document.documentElement`) is used in this example. You c
 | ---- | ---- | ------- | ----------- |
 | `parent` | `HTMLElement`, `string` | `document.documentElement` | The parent element or selector to apply the theme class to. |
 | `trigger` | `HTMLElement`, `string` | `undefined` | The element or selector that triggers the theme change. |
-| `autoModeName` | `string` | `auto` | The name of the auto mode. You can change it to something else like 'system' or 'device'. Remember to update the `value` or `data-mode` attributes of your triggers. |
+| `autoModeName` | `string` | `auto` | The name of the auto mode. You can change it to some else like 'system' or 'device'. Remember to update the `value` or `data-mode` attributes of your triggers. |
 | `attributeName` | `string` | `data-theme` | The data attribute name to store the current theme mode. |
 | `modeAttributeName` | `string` | `data-mode` | The data attribute name to store the current theme mode on the trigger element. |
 | `label` | `string` | `Switch to :mode theme` | The label template for the trigger element, where `:mode` will be replaced with the current mode. This sets `aria-label` attribute on supported elements with the label text as its value. `<select>` inputs are excluded and must be set manually. |

@@ -1,5 +1,5 @@
 import { BaseComponent } from '../core/BaseComponent.js';
-import { queryAll, addClasses, removeClasses } from '../core/utils.js';
+import { query, queryAll, addClasses, removeClasses } from '../core/utils.js';
 
 /**
  * @typedef {Object} DropdownEvents
@@ -8,12 +8,14 @@ import { queryAll, addClasses, removeClasses } from '../core/utils.js';
 
 /**
  * @typedef {Object} DropdownOptions
- * @property {string} [displayClass] The CSS class name for the display state.
+ * @property {string | HTMLElement} [target] The CSS selector string or element for the dropdown.
+ * @property {string} [hiddenClass] The CSS class name for the hidden state.
  */
 
 /** @type {DropdownOptions} */
 const defaults = {
-    displayClass: 'hidden'
+    target: undefined,
+    hiddenClass: 'hidden'
 };
 
 /**
@@ -27,6 +29,9 @@ export class Dropdown extends BaseComponent {
     static get defaults() {
         return defaults;
     }
+
+    /** @type {HTMLElement} */
+    #dropdown;
 
     /**
      * Constructor
@@ -42,9 +47,30 @@ export class Dropdown extends BaseComponent {
     // --- Core
 
     #init() {
-        // initialize
+        if (!this.#getTargetElement()) {
+            throw new Error(
+                `You must set a target or reference element for the dropdown.`
+            );
+        }
+
+        this.#dropdown = this.#getTargetElement();
     }
 
+    /** @returns {HTMLElement | null} */
+    #getTargetElement() {
+        if (this.options.target instanceof HTMLElement) return this.options.target;
+        let target = null;
+        
+        if (typeof this.options.target === 'string' && this.options.target.trim() !== '') {
+            target = query(this.options.target);
+        }
+
+        if (!target && this.el.nextElementSibling instanceof HTMLElement) {
+            target = this.el.nextElementSibling;
+        }
+        
+        return target;
+    }
 
     // --- Public API
 

@@ -1,28 +1,38 @@
 <template>
     <div ref="containerRef" class="resizable-container">
+        <div v-if="showTheme" class="demo-toolbar">
+            <button v-for="mode in ['light', 'dark', 'auto']" :key="mode"
+                :class="['theme-btn', { active: activeTheme === mode }]"
+                @click="sendTheme(mode)">
+                {{ mode }}
+            </button>
+        </div>
+
         <div v-if="isLoading" class="demo-spinner-overlay">
             <div class="demo-spinner"></div>
         </div>
 
         <iframe ref="iframeRef" :src="src" :style="{
-            height: calculatedHeight, /* Dynamically determined by content engine */
+            height: calculatedHeight,
             pointerEvents: isDragging ? 'none' : 'auto',
             opacity: isLoading ? 0 : 1
-        }" loading="lazy" scrolling="no" @load="onIframeLoad"></iframe>
+        }" loading="lazy" @load="onIframeLoad"></iframe>
         <div class="resize-handle" @mousedown="startResize"></div>
     </div>
 </template>
 
 <script setup>
-import { ref, onUnmounted, nextTick } from 'vue'
+import { ref, onUnmounted } from 'vue'
 
-const { src } = defineProps({
-    src: { type: String, required: true }
-    // Removed height prop to let content size dictate the space natively!
+const props = defineProps({
+    src: { type: String, required: true },
+    height: { type: String, default: '160px' },
+    showTheme: { type: Boolean, default: true }
 })
 
 const isLoading = ref(true)
-const calculatedHeight = ref('160px') // Initial fallback placeholder height
+const calculatedHeight = ref(props.height)
+const activeTheme = ref('auto')
 
 const containerRef = ref(null)
 const iframeRef = ref(null)
@@ -30,50 +40,15 @@ const isDragging = ref(false)
 
 let startX = 0
 let startWidth = 0
-let resizeObserver = null
 
-// Fired when iframe finishes rendering assets
 const onIframeLoad = () => {
     isLoading.value = false
-
-    try {
-        const iframeDoc = iframeRef.value.contentDocument || iframeRef.value.contentWindow.document
-        if (!iframeDoc) return
-
-        // Create a live sensor matching the content inside your HTML document template
-        resizeObserver = new ResizeObserver(() => {
-            updateHeight()
-        })
-
-        // Observe the body layout inside the iframe window
-        resizeObserver.observe(iframeDoc.body)
-
-        // Core initial execution height pass
-        updateHeight()
-    } catch (e) {
-        console.warn("Cross-origin security restrictions blocked automatic scaling. Falling back to default layout constraints.", e)
-    }
+    sendTheme(activeTheme.value)
 }
 
-// Function that reads the inner content document boundaries
-const updateHeight = () => {
-    if (!iframeRef.value) return
-    try {
-        const iframeDoc = iframeRef.value.contentDocument || iframeRef.value.contentWindow.document
-        if (iframeDoc && iframeDoc.documentElement) {
-            // 1. Temporarily collapse the iframe height to your minimum baseline.
-            // This unblocks the browser layout engine and forces a fast recalculation pass.
-            iframeRef.value.style.height = '160px'
-
-            // 2. Query the absolute document element scroll boundary.
-            const height = iframeDoc.documentElement.scrollHeight
-            
-            // 3. Apply the final height instantly, keeping the 160px floor boundary limit intact.
-            calculatedHeight.value = `${Math.max(height, 160)}px`
-        }
-    } catch (e) {
-        // Fail-safe protection layer
-    }
+const sendTheme = (mode) => {
+    activeTheme.value = mode
+    iframeRef.value?.contentWindow?.postMessage({ uiTheme: mode }, '*')
 }
 
 const startResize = (e) => {
@@ -82,6 +57,7 @@ const startResize = (e) => {
     startX = e.clientX
     startWidth = containerRef.value.offsetWidth
     document.body.style.cursor = 'ew-resize'
+    document.body.style.userSelect = 'none'
     window.addEventListener('mousemove', resizeContainer)
     window.addEventListener('mouseup', stopResize)
 }
@@ -97,16 +73,12 @@ const resizeContainer = (e) => {
     } else if (currentWidth > parentMaxWidth) {
         containerRef.value.style.width = '100%'
     }
-
-    // Force height recalculation immediately as horizontal layout boundaries shift
-    nextTick(() => {
-        updateHeight()
-    })
 }
 
 const stopResize = () => {
     isDragging.value = false
     document.body.style.cursor = 'default'
+    document.body.style.userSelect = ''
     window.removeEventListener('mousemove', resizeContainer)
     window.removeEventListener('mouseup', stopResize)
 }
@@ -114,14 +86,10 @@ const stopResize = () => {
 onUnmounted(() => {
     window.removeEventListener('mousemove', resizeContainer)
     window.removeEventListener('mouseup', stopResize)
-    if (resizeObserver) {
-        resizeObserver.disconnect()
-    }
 })
 </script>
 
 <style scoped>
-/* Keeping your exact CSS visual classes completely identical */
 .resizable-container {
     position: relative;
     width: 100%;
@@ -130,14 +98,38 @@ onUnmounted(() => {
     display: block;
 }
 
+.demo-toolbar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+    justify-content: end;
+}
+
+.theme-btn {
+    padding: 2px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--vp-c-gutter);
+    background: transparent;
+    color: var(--vp-c-text-2);
+    cursor: pointer;
+    font-size: 0.75rem;
+    text-transform: capitalize;
+}
+
+.theme-btn.active {
+    background: var(--vp-c-brand-1, #3eaf7c);
+    border-color: var(--vp-c-brand-1, #3eaf7c);
+    color: #fff;
+}
+
 iframe {
     border-radius: 0.5rem;
-    overflow: hidden;
+    overflow: auto;
     border: 1px solid var(--vp-c-gutter);
     width: 100%;
     display: block;
     transition: opacity 0.25s ease-in-out;
-    vertical-align: top; /* FIX: Deletes typography baseline padding artifacts */
+    vertical-align: top;
 }
 
 .demo-spinner-overlay {
@@ -191,7 +183,8 @@ iframe {
     transition: background-color 0.2s ease;
 }
 
-.resize-handle:hover::before, .resize-handle:active::before {
+.resize-handle:hover::before,
+.resize-handle:active::before {
     background-color: var(--vp-c-brand-1, #3eaf7c);
 }
 </style>

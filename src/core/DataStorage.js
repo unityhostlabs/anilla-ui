@@ -42,7 +42,7 @@ export class DataStorage {
      * @param {string} key 
      * @returns {string}
      * */
-    _getKey(key) {
+    #getKey(key) {
         return `${this.options.prefix}${this.options.delimiter}${key}`;
     }
 
@@ -52,7 +52,7 @@ export class DataStorage {
      * @param {any} value 
      * @returns {string}
      */
-    _encode(value) {
+    #encode(value) {
         return this.options.jsonEncode ? JSON.stringify(value) : value;
     }
 
@@ -62,7 +62,7 @@ export class DataStorage {
      * @param {any} value 
      * @returns {string}
      */
-    _decode(value) {
+    #decode(value) {
         return this.options.jsonEncode ? JSON.parse(value) : value;
     }
 
@@ -75,7 +75,7 @@ export class DataStorage {
      * @returns {boolean}
      */
     has(key) {
-        return this._getKey(key) in this.storage;
+        return this.#getKey(key) in this.storage;
     }
 
     /**
@@ -85,7 +85,7 @@ export class DataStorage {
      * @param {any} value 
      */
     set(key, value) {
-        this.storage.setItem(this._getKey(key), this._encode(value));
+        this.storage.setItem(this.#getKey(key), this.#encode(value));
     }
 
     /**
@@ -96,9 +96,9 @@ export class DataStorage {
      * @returns {any}
      */
     get(key, defaultValue = null) {
-        const item = this.storage.getItem(this._getKey(key));
+        const item = this.storage.getItem(this.#getKey(key));
 
-        return item ? this._decode(item) : defaultValue;
+        return item ? this.#decode(item) : defaultValue;
     }
 
     /**
@@ -110,7 +110,7 @@ export class DataStorage {
      */
     remove(key) {
         let items = key instanceof Array ? key : [key];
-        items = items.map((x) =>  this._getKey(x));
+        items = items.map((x) =>  this.#getKey(x));
 
         for (const item of items) {
             this.storage.removeItem(item);

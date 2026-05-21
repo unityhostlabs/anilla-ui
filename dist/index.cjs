@@ -63,7 +63,7 @@ var __exportAll = (all, no_symbols) => {
 *   Not intended for external use.
 */
 /** @type {AnillaUIConfig} */
-const defaults$3 = {
+const defaults$4 = {
 	name: "AnillaUI",
 	version: "0.1.0",
 	dataPrefix: "ui",
@@ -73,7 +73,7 @@ const defaults$3 = {
 	_autoInitBoot: () => void 0
 };
 /** @type {AnillaUIConfig} */
-const config = { ...defaults$3 };
+const config = { ...defaults$4 };
 /**
 * Merge user-supplied overrides into the global config.
 * Call this once at app boot, before any components are initialized.
@@ -91,7 +91,7 @@ const config = { ...defaults$3 };
 * });
 */
 function configure(overrides = {}) {
-	const invalid = Object.keys(overrides).filter((k) => !(k in defaults$3));
+	const invalid = Object.keys(overrides).filter((k) => !(k in defaults$4));
 	if (invalid.length) logger.warn(`configure() received unknown keys: ${invalid.join(", ")}`);
 	Object.assign(config, overrides);
 	if (config.autoInit && config._autoInitBoot) config._autoInitBoot();
@@ -104,7 +104,7 @@ function configure(overrides = {}) {
 * @returns {AnillaUIConfig}
 */
 function resetConfig() {
-	Object.assign(config, defaults$3);
+	Object.assign(config, defaults$4);
 	return config;
 }
 /**
@@ -114,12 +114,27 @@ function resetConfig() {
 * config.debug so consumers can control verbosity without touching source.
 */
 const logger = {
+	/**
+	* Print an informational message (only when debug is enabled).
+	* 
+	* @param {...any} args
+	*/
 	info(...args) {
 		if (config.debug) console.info(`[${config.name}]`, ...args);
 	},
+	/**
+	* Print a warning (suppressed when logLevel is 'silent').
+	* 
+	* @param {...any} args
+	*/
 	warn(...args) {
 		if (config.logLevel !== "silent") console.warn(`[${config.name}]`, ...args);
 	},
+	/**
+	* Print an error (suppressed only when logLevel is 'silent').
+	* 
+	* @param {...any} args
+	*/
 	error(...args) {
 		if (config.logLevel !== "silent") console.error(`[${config.name}]`, ...args);
 	}
@@ -247,7 +262,11 @@ function removeClasses(el, classString) {
 */
 function query(selectorOrElement, context = document) {
 	if (selectorOrElement instanceof HTMLElement) return selectorOrElement;
-	return context.querySelector(selectorOrElement);
+	try {
+		return context.querySelector(selectorOrElement);
+	} catch (error) {
+		return null;
+	}
 }
 /**
 * Finds DOM elements by selector or returns from element map.
@@ -259,7 +278,11 @@ function query(selectorOrElement, context = document) {
 */
 function queryAll(selectorOrMap, context = document) {
 	if (selectorOrMap instanceof Map) return Array.from(selectorOrMap.values());
-	return Array.from(context.querySelectorAll(selectorOrMap));
+	try {
+		return Array.from(context.querySelectorAll(selectorOrMap));
+	} catch (error) {
+		return [];
+	}
 }
 /**
 * Converts a string to a URL-friendly slug
@@ -465,6 +488,15 @@ function removeAttributes(element, attributes) {
 /** @type {Map<string, typeof import('./BaseComponent.js').BaseComponent>} */
 const componentMap = /* @__PURE__ */ new Map();
 const AutoInit = {
+	/**
+	* Register a component class so AutoInit can activate it from the DOM.
+	* The component's `componentName` is lowercased to form the attribute slug.
+	*
+	*   Modal     → listens for data-{dataPrefix}-modal="true"
+	*   Dropdown  → listens for data-{dataPrefix}-dropdown="true"
+	*
+	* @param {typeof import('./BaseComponent.js').BaseComponent} ComponentClass
+	*/
 	register(ComponentClass) {
 		const name = ComponentClass.componentName;
 		if (!name || name === "BaseComponent") {
@@ -474,9 +506,21 @@ const AutoInit = {
 		componentMap.set(name.toLowerCase(), ComponentClass);
 		logger.info(`AutoInit: registered "${name}" → data-${config.dataPrefix}-${name.toLowerCase()}`);
 	},
+	/**
+	* Register multiple component classes at once.
+	* 
+	* @param {Array<typeof import('./BaseComponent.js').BaseComponent>} classes
+	*/
 	registerAll(classes) {
 		classes.forEach((cls) => AutoInit.register(cls));
 	},
+	/**
+	* Scan a root element (default: document) for component enable attributes
+	* and initialize every component found that has not yet been initialized.
+	*
+	* @param {Document|Element} [root=document]
+	* @returns {import('./BaseComponent.js').BaseComponent[]} All newly created instances
+	*/
 	init(root = document) {
 		if (componentMap.size === 0) {
 			logger.warn("AutoInit.init(): no components are registered. Call AutoInit.registerAll() first.");
@@ -503,9 +547,19 @@ const AutoInit = {
 		logger.info(`AutoInit: scan complete — ${created.length} component(s) initialized`);
 		return created;
 	},
+	/**
+	* Returns all currently registered component slugs.
+	* 
+	* @returns {string[]}
+	*/
 	registeredNames() {
 		return [...componentMap.keys()];
 	},
+	/**
+	* Remove a component from the registry by name or slug (mainly for testing).
+	* 
+	* @param {string} nameOrSlug  e.g. 'Modal' or 'modal'
+	*/
 	unregister(nameOrSlug) {
 		if (!componentMap.delete(nameOrSlug.toLowerCase())) logger.warn(`AutoInit.unregister(): "${nameOrSlug}" was not registered.`);
 	}
@@ -697,33 +751,79 @@ function makeKey(el, componentName) {
 	return `${componentName}::${el.getAttribute(attr)}`;
 }
 const Registry = {
+	/**
+	* Store a component instance.
+	* 
+	* @param {Element} el
+	* @param {string} componentName
+	* @param {import('./BaseComponent.js').BaseComponent} instance
+	*/
 	set(el, componentName, instance) {
 		const key = makeKey(el, componentName);
 		if (store.has(key)) throw new Error(`${componentName} is already initialized on this element`);
 		store.set(key, instance);
 		logger.info(`Registry: registered <${componentName}>`);
 	},
+	/**
+	* Retrieve a component instance by Element reference.
+	* 
+	* @param {Element} el
+	* @param {string} componentName
+	* @returns {import('./BaseComponent.js').BaseComponent|undefined}
+	*/
 	getByElement(el, componentName) {
 		const attr = el.getAttribute(idAttr());
 		if (!attr) return void 0;
 		return store.get(`${componentName}::${attr}`);
 	},
+	/**
+	* Retrieve a component instance by CSS selector string.
+	* Resolves the first matching element in the document.
+	* 
+	* @param {string} selector
+	* @param {string} componentName
+	* @returns {import('./BaseComponent.js').BaseComponent|undefined}
+	*/
 	getBySelector(selector, componentName) {
 		const el = document.querySelector(selector);
 		if (!el) return void 0;
 		return Registry.getByElement(el, componentName);
 	},
+	/**
+	* Retrieve a component instance by either a CSS selector string or Element.
+	* 
+	* @param {string|Element} target
+	* @param {string} componentName
+	* @returns {import('./BaseComponent.js').BaseComponent|undefined}
+	*/
 	get(target, componentName) {
 		if (typeof target === "string") return Registry.getBySelector(target, componentName);
 		if (target instanceof Element) return Registry.getByElement(target, componentName);
 	},
+	/**
+	* Return all registered instances of a given component type.
+	* 
+	* @param {string} componentName
+	* @returns {import('./BaseComponent.js').BaseComponent[]}
+	*/
 	getAllOfType(componentName) {
 		const prefix = `${componentName}::`;
 		return [...store.entries()].filter(([key]) => key.startsWith(prefix)).map(([, instance]) => instance);
 	},
+	/**
+	* Return every instance across all component types.
+	* 
+	* @returns {import('./BaseComponent.js').BaseComponent[]}
+	*/
 	getAll() {
 		return [...store.values()];
 	},
+	/**
+	* Remove a component instance from the registry (called by destroy()).
+	* 
+	* @param {Element} el
+	* @param {string} componentName
+	*/
 	delete(el, componentName) {
 		const attr = el.getAttribute(idAttr());
 		if (!attr) return;
@@ -731,9 +831,17 @@ const Registry = {
 		el.removeAttribute(idAttr());
 		logger.info(`Registry: unregistered <${componentName}>`);
 	},
+	/**
+	* Remove all instances from the registry.
+	*/
 	clear() {
 		store.clear();
 	},
+	/**
+	* Dump the raw store map (for debugging).
+	* 
+	* @returns {Map<string, import('./BaseComponent.js').BaseComponent>}
+	*/
 	debug() {
 		return new Map(store);
 	}
@@ -750,7 +858,7 @@ const Registry = {
 * @property {string | null} [transitionLeaveTo]
 */
 /** @type {TransitionOptions} */
-const defaults$2 = {
+const defaults$3 = {
 	transitionEnter: null,
 	transitionEnterFrom: null,
 	transitionEnterTo: null,
@@ -774,7 +882,7 @@ var Transition = class {
 	* @returns {TransitionOptions}
 	*/
 	static get defaults() {
-		return defaults$2;
+		return defaults$3;
 	}
 	/** @type {Record<string, string>} */
 	#config = {};
@@ -1305,7 +1413,7 @@ var BaseComponent = class {
 * @property {'local' | 'session'} [storageType] The type of storage to use.
 */
 /** @type {Options} */
-const defaults$1 = {
+const defaults$2 = {
 	prefix: "",
 	delimiter: ":",
 	jsonEncode: true,
@@ -1324,7 +1432,7 @@ var DataStorage = class {
 	*/
 	constructor(options = {}) {
 		this.options = {
-			...defaults$1,
+			...defaults$2,
 			...options
 		};
 		this.storage = this.options.storageType === "session" ? sessionStorage : localStorage;
@@ -1336,7 +1444,7 @@ var DataStorage = class {
 	* @param {string} key 
 	* @returns {string}
 	* */
-	_getKey(key) {
+	#getKey(key) {
 		return `${this.options.prefix}${this.options.delimiter}${key}`;
 	}
 	/**
@@ -1345,7 +1453,7 @@ var DataStorage = class {
 	* @param {any} value 
 	* @returns {string}
 	*/
-	_encode(value) {
+	#encode(value) {
 		return this.options.jsonEncode ? JSON.stringify(value) : value;
 	}
 	/**
@@ -1354,7 +1462,7 @@ var DataStorage = class {
 	* @param {any} value 
 	* @returns {string}
 	*/
-	_decode(value) {
+	#decode(value) {
 		return this.options.jsonEncode ? JSON.parse(value) : value;
 	}
 	/**
@@ -1364,7 +1472,7 @@ var DataStorage = class {
 	* @returns {boolean}
 	*/
 	has(key) {
-		return this._getKey(key) in this.storage;
+		return this.#getKey(key) in this.storage;
 	}
 	/**
 	* Add or update a key in storage.
@@ -1373,7 +1481,7 @@ var DataStorage = class {
 	* @param {any} value 
 	*/
 	set(key, value) {
-		this.storage.setItem(this._getKey(key), this._encode(value));
+		this.storage.setItem(this.#getKey(key), this.#encode(value));
 	}
 	/**
 	* Get a value from storage.
@@ -1383,8 +1491,8 @@ var DataStorage = class {
 	* @returns {any}
 	*/
 	get(key, defaultValue = null) {
-		const item = this.storage.getItem(this._getKey(key));
-		return item ? this._decode(item) : defaultValue;
+		const item = this.storage.getItem(this.#getKey(key));
+		return item ? this.#decode(item) : defaultValue;
 	}
 	/**
 	* Remove one or more keys from storage.
@@ -1395,7 +1503,7 @@ var DataStorage = class {
 	*/
 	remove(key) {
 		let items = key instanceof Array ? key : [key];
-		items = items.map((x) => this._getKey(x));
+		items = items.map((x) => this.#getKey(x));
 		for (const item of items) this.storage.removeItem(item);
 	}
 	/**
@@ -1409,6 +1517,63 @@ var DataStorage = class {
 			return;
 		}
 		this.storage.clear();
+	}
+};
+//#endregion
+//#region src/components/Dropdown.js
+/**
+* @typedef {Object} DropdownEvents
+* @property {{instance: Dropdown}} change Fired when the dropdown changes.
+*/
+/**
+* @typedef {Object} DropdownOptions
+* @property {string | HTMLElement} [target] The CSS selector string or element for the dropdown.
+* @property {string} [hiddenClass] The CSS class name for the hidden state.
+*/
+/** @type {DropdownOptions} */
+const defaults$1 = {
+	target: void 0,
+	hiddenClass: "hidden"
+};
+/**
+* @extends {BaseComponent<DropdownEvents, typeof defaults>}
+*/
+var Dropdown = class extends BaseComponent {
+	static get componentName() {
+		return "Dropdown";
+	}
+	static get defaults() {
+		return defaults$1;
+	}
+	/** @type {HTMLElement} */
+	#dropdown;
+	/**
+	* Constructor
+	* 
+	* @param {string|Element} target CSS selector string or DOM Element.
+	* @param {DropdownOptions} [options]
+	*/
+	constructor(target, options = {}) {
+		super(target, options);
+		this.#init();
+	}
+	#init() {
+		if (!this.#getTargetElement()) throw new Error(`You must set a target or reference element for the dropdown.`);
+		this.#dropdown = this.#getTargetElement();
+	}
+	/** @returns {HTMLElement | null} */
+	#getTargetElement() {
+		if (this.options.target instanceof HTMLElement) return this.options.target;
+		let target = null;
+		if (typeof this.options.target === "string" && this.options.target.trim() !== "") target = query(this.options.target);
+		if (!target && this.el.nextElementSibling instanceof HTMLElement) target = this.el.nextElementSibling;
+		return target;
+	}
+	destroy() {
+		super.destroy();
+	}
+	get accessorName() {
+		return "accessor";
 	}
 };
 //#endregion
@@ -1508,8 +1673,7 @@ var Theme = class extends BaseComponent {
 				});
 			}
 		});
-		const isDarkPreferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
-		if (this.#getTheme() === this.#modes.auto && isDarkPreferred || this.#getTheme() === this.#modes.dark) addClasses(this.el, this.options.className);
+		this.#shouldAddDarkClass(this.#getTheme());
 		this.#updateTriggerState(this.#getTheme());
 	}
 	/**
@@ -1564,6 +1728,12 @@ var Theme = class extends BaseComponent {
 		return ("type" in el ? el.type : "") === "checkbox" || this.#isClickable(el) && !hasAttribute(el, this.options.modeAttributeName);
 	}
 	/** @param {ThemeMode} mode  */
+	#shouldAddDarkClass(mode) {
+		const isDarkPreferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
+		const shouldAddDarkClass = mode === this.#modes.auto && isDarkPreferred || mode === this.#modes.dark;
+		this.el.classList.toggle(this.options.className, shouldAddDarkClass);
+	}
+	/** @param {ThemeMode} mode  */
 	#updateTriggerState(mode) {
 		const isDarkPreferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
 		this.#getTriggers().forEach((trigger) => {
@@ -1594,19 +1764,16 @@ var Theme = class extends BaseComponent {
 	* @param {ThemeMode} mode
 	*/
 	change(mode) {
-		const isDarkPreferred = window.matchMedia("(prefers-color-scheme: dark)").matches;
-		const shouldAddDarkClass = mode === this.#modes.dark || mode === this.#modes.auto && isDarkPreferred;
 		if (mode === this.#modes.auto) this.#storage.remove(this.options.storageKey);
 		else this.#storage.set(this.options.storageKey, mode);
-		if (shouldAddDarkClass) addClasses(this.el, this.options.className);
-		else removeClasses(this.el, this.options.className);
+		this.#shouldAddDarkClass(mode);
 		setAttributes(this.el, { [this.options.attributeName]: mode });
 		this.#updateTriggerState(mode);
 		this.emit("change");
 	}
 	destroy() {
 		this.#storage.remove(this.options.storageKey);
-		removeClasses(this.el, this.options.className);
+		this.el.classList.remove(this.options.className);
 		removeAttributes(this.el, [this.options.attributeName]);
 		this.#getTriggers().forEach((trigger) => {
 			if (this.#isClickable(trigger)) removeAttributes(trigger, ["aria-pressed", "aria-label"]);
@@ -1634,6 +1801,7 @@ exports.AutoInit = AutoInit;
 exports.BaseComponent = BaseComponent;
 exports.DOMEventStore = DOMEventStore;
 exports.DataStorage = DataStorage;
+exports.Dropdown = Dropdown;
 exports.EventBus = EventBus;
 exports.Registry = Registry;
 exports.Theme = Theme;

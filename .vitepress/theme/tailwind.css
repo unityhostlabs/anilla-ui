@@ -47,7 +47,7 @@
     }
 
     body {
-        @apply h-auto min-h-40 m-0 p-0 flex flex-col;
+        @apply h-auto m-0 flex flex-col;
     }
 
     /* Turbo progress bar */

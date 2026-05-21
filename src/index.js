@@ -25,7 +25,7 @@ export * as utils                               from './core/utils.js';
 
 // --- Components
 
-// export { Dropdown } from './components/Dropdown.js';
+export { Dropdown } from './components/Dropdown.js';
 // export { Modal }    from './components/Modal.js';
 // export { Tabs }     from './components/Tabs.js';
 export { Theme }            from './components/Theme.js';

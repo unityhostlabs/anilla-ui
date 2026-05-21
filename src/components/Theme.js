@@ -8,8 +8,6 @@ import {
     setAttributes,
     removeAttributes,
     hasAttribute,
-    addClasses,
-    removeClasses,
     interpolate
 } from '../core/utils.js';
 
@@ -107,8 +105,8 @@ export class Theme extends BaseComponent {
         const mediaQuery = /** @type {any} */ (window.matchMedia('(prefers-color-scheme: dark)'));
 
         this.addListener(mediaQuery, 'change', (event) => {
-            const e = /** @type {MediaQueryListEvent} */ (event);
-            
+            // const e = /** @type {MediaQueryListEvent} */ (event);
+
             if (this.#getTheme() === this.#modes.auto) {
                 this.change(this.#getTheme());
             }
@@ -145,11 +143,14 @@ export class Theme extends BaseComponent {
         });
 
         // Set initial theme based on stored value or system preference
-        const isDarkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        this.#shouldAddDarkClass(this.#getTheme());
+        // const isDarkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        // const shouldAddDarkClass = (this.#getTheme() === this.#modes.auto && isDarkPreferred) || this.#getTheme() === this.#modes.dark;
+        // this.el.classList.toggle(this.options.className, shouldAddDarkClass);
 
-        if ((this.#getTheme() === this.#modes.auto && isDarkPreferred) || this.#getTheme() === this.#modes.dark) {
-            addClasses(this.el, this.options.className);
-        }
+        // if ((this.#getTheme() === this.#modes.auto && isDarkPreferred) || this.#getTheme() === this.#modes.dark) {
+        //     addClasses(this.el, this.options.className);
+        // }
 
         // Update trigger state on initialization
         this.#updateTriggerState(this.#getTheme());
@@ -223,6 +224,13 @@ export class Theme extends BaseComponent {
         
         return (type === 'checkbox' || (this.#isClickable(el)) && !hasAttribute(el, this.options.modeAttributeName));
     }
+    
+    /** @param {ThemeMode} mode  */
+    #shouldAddDarkClass(mode) {
+        const isDarkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const shouldAddDarkClass = (mode === this.#modes.auto && isDarkPreferred) || mode === this.#modes.dark;
+        this.el.classList.toggle(this.options.className, shouldAddDarkClass);
+    }
 
     /** @param {ThemeMode} mode  */
     #updateTriggerState(mode) {
@@ -281,8 +289,8 @@ export class Theme extends BaseComponent {
      * @param {ThemeMode} mode
      */
     change(mode) {
-        const isDarkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const shouldAddDarkClass = mode === this.#modes.dark || (mode === this.#modes.auto && isDarkPreferred);
+        // const isDarkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        // const shouldAddDarkClass = mode === this.#modes.dark || (mode === this.#modes.auto && isDarkPreferred);
 
         // Update storage
         if (mode === this.#modes.auto) {
@@ -292,11 +300,13 @@ export class Theme extends BaseComponent {
         }
 
         // Update DOM classes
-        if (shouldAddDarkClass) {
-            addClasses(this.el, this.options.className);
-        } else {
-            removeClasses(this.el, this.options.className);
-        }
+        this.#shouldAddDarkClass(mode);
+        // this.el.classList.toggle(this.options.className, shouldAddDarkClass);
+        // if (shouldAddDarkClass) {
+        //     addClasses(this.el, this.options.className);
+        // } else {
+        //     removeClasses(this.el, this.options.className);
+        // }
 
         // Update attribute
         setAttributes(this.el, {
@@ -309,7 +319,7 @@ export class Theme extends BaseComponent {
 
     destroy() {
         this.#storage.remove(this.options.storageKey);
-        removeClasses(this.el, this.options.className);
+        this.el.classList.remove(this.options.className);
         removeAttributes(this.el, [this.options.attributeName]);
 
         this.#getTriggers().forEach(trigger => {
