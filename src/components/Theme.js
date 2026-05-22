@@ -30,6 +30,7 @@ import {
  * @property {boolean} [showTitle] Whether to show the title attribute on the trigger element.
  * @property {boolean} [enableStorage] Whether to enable localStorage to persist the theme mode.
  * @property {string} [storageKey] The key used to store the theme mode in localStorage.
+ * @property {'local' | 'session'} [storageType] The type of storage to use for persisting the theme mode.
  * @property {string} [className] The CSS class name for the dark theme.
  */
 
@@ -43,6 +44,7 @@ const defaults = {
     showTitle: false,
     enableStorage: true,
     storageKey: 'theme',
+    storageType: 'local',
     className: 'dark'
 };
 
@@ -58,7 +60,8 @@ export class Theme extends BaseComponent {
         return defaults;
     }
 
-    #storage = new DataStorage({ jsonEncode: false });
+    /** @type {DataStorage} */
+    #storage;
 
     /** @type {Record<ThemeMode, ThemeMode>} */
     #modes = {
@@ -83,6 +86,10 @@ export class Theme extends BaseComponent {
     // --- Core
 
     #init() {
+        this.#storage = new DataStorage({ 
+            jsonEncode: false,
+            storageType: this.options.storageType === 'session' ? 'session' : 'local',
+        });
         this.#modes.auto = /** @type {ThemeMode} */ (this.options.autoModeName);
 
         if (this.options.enableStorage) {
@@ -299,6 +306,8 @@ export class Theme extends BaseComponent {
      * @param {ThemeMode} mode
      */
     change(mode) {
+        if (!(mode in this.#modes)) mode = this.#modes.auto;
+
         // Update storage
         if (this.options.enableStorage) {            
             if (mode === this.#modes.auto) {

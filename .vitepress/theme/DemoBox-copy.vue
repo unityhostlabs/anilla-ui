@@ -1,11 +1,10 @@
 <template>
     <div ref="containerRef" class="resizable-container">
         <div v-if="showTheme" class="demo-toolbar">
-            <button 
-                :id="id"
-                :class="['theme-btn', { active: isDarkMode }]"
-                @click="toggleTheme">
-                {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
+            <button v-for="mode in ['light', 'dark', 'auto']" :key="mode"
+                :class="['theme-btn', { active: activeTheme === mode }]"
+                @click="sendTheme(mode)">
+                {{ mode }}
             </button>
         </div>
 
@@ -28,13 +27,12 @@ import { ref, onUnmounted } from 'vue'
 const props = defineProps({
     src: { type: String, required: true },
     height: { type: String, default: '160px' },
-    showTheme: { type: Boolean, default: true },
-    id: { type: String, default: '' }
+    showTheme: { type: Boolean, default: true }
 })
 
 const isLoading = ref(true)
 const calculatedHeight = ref(props.height)
-const isDarkMode = ref(false) // Tracks true/false toggle state
+const activeTheme = ref('auto')
 
 const containerRef = ref(null)
 const iframeRef = ref(null)
@@ -45,19 +43,12 @@ let startWidth = 0
 
 const onIframeLoad = () => {
     isLoading.value = false
-    sendTheme()
+    sendTheme(activeTheme.value)
 }
 
-// Switches the boolean state and updates the iframe
-const toggleTheme = () => {
-    isDarkMode.value = !isDarkMode.value
-    sendTheme()
-}
-
-// Sends 'dark' or 'light' string based on the boolean state
-const sendTheme = () => {
-    const currentMode = isDarkMode.value ? 'dark' : 'light'
-    iframeRef.value?.contentWindow?.postMessage({ uiTheme: currentMode, id: props.id }, '*')
+const sendTheme = (mode) => {
+    activeTheme.value = mode
+    iframeRef.value?.contentWindow?.postMessage({ uiTheme: mode }, '*')
 }
 
 const startResize = (e) => {
@@ -122,6 +113,7 @@ onUnmounted(() => {
     color: var(--vp-c-text-2);
     cursor: pointer;
     font-size: 0.75rem;
+    text-transform: capitalize;
 }
 
 .theme-btn.active {

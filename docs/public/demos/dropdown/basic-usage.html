@@ -4,31 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../../demos.css">
-    <!-- <script>
-        // Set initial theme to prevent FOUC
-        const storageKey = 'toggle-theme-demo';
-        const savedTheme = localStorage.getItem(storageKey);
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-            document.documentElement.classList.add('dark');
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    </script> -->
+    <script type="module" src="../../theme.js"></script>
     <script type="module">
-        import { Theme } from '../../src/components/Theme.js';
 
-        const theme = new Theme('html', {
-            storageKey: 'basic-dropdown-theme'
-        });
-
-        window.addEventListener('message', (e) => {
-            console.log(e);
-            theme.change(e.data?.uiTheme);
-            // if (e.data?.uiTheme && window.__themeInstance) {
-            //     window.__themeInstance.change(e.data.uiTheme)
-            // }
-        })
     </script>
 </head>
 <body>

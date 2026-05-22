@@ -62,7 +62,7 @@ The `value` attribute of the `<option>` tag of a single `<select>` input, is use
 
 #### Buttons or Links
 
-Multiple `<button>` and `<a>` tags can be used to setup choice selection triggers. To set the preferred theme mode on these elements, add `data-mode="{light|dark|auto}"` data attribute to the trigger element. A `<button>` or `<a>` tag can be styled based on the state of their `aria-pressed="{true|false}"` and `aria-current="{true|false}"` attributes.
+Multiple `<button>` and `<a>` tags can be used to setup choice selection triggers. To set the preferred theme mode on these elements, add `data-mode="{light|dark|auto}"` to the trigger element. A `<button>` or `<a>` tag can be styled based on the state of their `aria-pressed="{true|false}"` and `aria-current="{true|false}"` attributes.
 
 <DemoBox src="/demos/theme/selection-buttons-links.html" :show-theme="false"/>
 
@@ -74,7 +74,7 @@ Multiple `<button>` and `<a>` tags can be used to setup choice selection trigger
 
 ## Toggle Triggers
 
-Checkboxes have only two states and are therefore considered toggle triggers. Single `<button>` or `<a>` tags without a `data-mode="{light|dark|auto}"` data attribute are also considered as toggles. Toggle triggers only have `light` and `dark` modes. The `dark` mode is enabled when `<input type="checkbox">` is `:checked` or a `<button>` or `<a>` is pressed.
+Checkboxes have only two states and are therefore considered toggle triggers. Single `<button>` or `<a>` elements that do not have a `data-mode="{light|dark|auto}"` attribute present are considered as toggles. Toggle triggers only have `light` and `dark` modes. The `dark` mode is enabled when `<input type="checkbox">` is `:checked` or a `<button>` or `<a>` is pressed.
 
 <DemoBox src="/demos/theme/toggle-triggers.html" :show-theme="false"/>
 
@@ -86,13 +86,44 @@ Checkboxes have only two states and are therefore considered toggle triggers. Si
 <button type="button" class="theme-trigger">Toggle Mode</button>
 ```
 
+## Storage Type
+The component uses `localStorage` to persist the selected theme across browser sessions. If you prefer the theme preference to reset when the user closes their browser tab or window, you can change the `storageType` option to `session`.
+
+This can be configured via JavaScript options or inline using the `data-storage-type` attribute. The example below stores the theme mode in `sessionStorage`.
+
+<DemoBox src="/demos/theme/session-storage.html" :show-theme="false"/>
+
+::: code-group
+
+```html [HTML]
+<html lang="en" data-ui-theme="enable" data-theme-trigger=".theme-trigger" data-theme-storage-type="session">
+    <head>...</head>
+    <body>
+        <input class="theme-trigger" type="checkbox" role="switch">
+    </body>
+</html>
+```
+
+```js [JS]
+import { Theme } from '@anilla/ui';
+
+const theme = new Theme(element, {
+    trigger: '.theme-trigger',
+    storageType: 'session'
+});
+```
+
+:::
+
 ## Disable Storage
 
-The theme mode persists due to it being stored in `localStorage` by default. If you however do not like this feature, you can disable it by changing the `enableStorage` option to `false`. You can also change this option by adding `data-enable-storage="{true|false}"` data attribute to the component element.
+By default, the theme preference persists across sessions because it is saved to `localStorage`. If you want to disable this behavior, you can set the `enableStorage` option to `false`. This can also be configured inline by adding the `data-enable-storage="false"` attribute to the component element.
 
 <DemoBox src="/demos/theme/disable-storage.html" :show-theme="false"/>
 
-```html
+::: code-group
+
+```html [HTML]
 <html lang="en" data-ui-theme="enable" data-theme-trigger=".theme-trigger" data-theme-enable-storage="false">
     <head>...</head>
     <body>
@@ -100,6 +131,17 @@ The theme mode persists due to it being stored in `localStorage` by default. If 
     </body>
 </html>
 ```
+
+```js [JS]
+import { Theme } from '@anilla/ui';
+
+const theme = new Theme(element, {
+    trigger: '.theme-trigger',
+    enableStorage: false
+});
+```
+
+:::
 
 ## Light Theme Flash Fix
 
@@ -132,8 +174,9 @@ To fix the light theme flash before `dark` mode loads, you must apply the theme 
 | `modeAttributeName` | `string` | `data-mode` | The data attribute name to store the current theme mode on the trigger element. |
 | `label` | `string` | `Switch to :mode theme` | The label template for the trigger element, where `:mode` will be replaced with the current mode. This sets `aria-label` attribute on supported elements with the label text as its value. `<select>` inputs are excluded and must be set manually. |
 | `showTitle` | `boolean` | `false` | Sets a `title` attribute with the label text as its value. `<select>` inputs are excluded. |
-| `enableStorage` | `boolean` | `true` | Whether to enable `localStorage` to persist the theme mode. |
+| `enableStorage` | `boolean` | `true` | Whether to enable `localStorage` to persist the theme mode across sessions. |
 | `storageKey` | `string` | `theme` | The key used to store the theme mode in `localStorage`. |
+| `storageType` | `string` | `local` | Determines the storage mechanism used to persist the theme. Accepts `local` (uses `localStorage`) or `session` (uses `sessionStorage`). |
 | `className` | `string` | `dark` | The CSS class name for the dark theme. |
 
 ## JavaScript
@@ -180,7 +223,7 @@ Changes the current theme to the set `mode`.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| `mode` | string | Your preferred mode. E.g. light, dark or auto |
+| `mode` | string | Your preferred mode (e.g., `light`, `dark` or `auto`). |
 
 ### Accessors 
 
@@ -240,7 +283,7 @@ console.log(theme.modes); // {...}
 
 ### Events 
 
-You can listen for events with an internal or external approach. The internal listener uses the `on()` method of components, and the external approach uses JavaScript's `addEventListener()` method with a prefixed event name.
+You can listen for events using either an internal or external approach. The internal approach uses the component's `on()` method, while the external approach relies on JavaScript's native `addEventListener()` method with a prefixed event name (e.g., `ui:change`).
 
 ##### `change`
 
@@ -267,7 +310,7 @@ element.addEventListener('ui:change', (e) => {
 
 #### Callbacks
 
-You can invoke callbacks with event names by prefixing them with `on` followed by a capitalized name of the event like `onChange`.
+You can define callbacks by prefixing the event name with `on` and using PascalCase (e.g., the `change` event becomes the `onChange` callback).
 
 ```js
 const theme = new Theme(element, {

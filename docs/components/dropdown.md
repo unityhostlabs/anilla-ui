@@ -27,7 +27,7 @@ Note that your dropdown element must be initially hidden using the utility class
 </div>
 ```
 
-<DemoBox src="/demos/dropdown/basic-usage.html" height="300px"/>
+<DemoBox src="/demos/dropdown/basic-usage.html" height="300px" id="dropdown-basic-usage" />
 
 ## Syntax Highlighting
 

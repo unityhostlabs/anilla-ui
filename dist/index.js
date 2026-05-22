@@ -113,12 +113,27 @@ function resetConfig() {
 * config.debug so consumers can control verbosity without touching source.
 */
 const logger = {
+	/**
+	* Print an informational message (only when debug is enabled).
+	* 
+	* @param {...any} args
+	*/
 	info(...args) {
 		if (config.debug) console.info(`[${config.name}]`, ...args);
 	},
+	/**
+	* Print a warning (suppressed when logLevel is 'silent').
+	* 
+	* @param {...any} args
+	*/
 	warn(...args) {
 		if (config.logLevel !== "silent") console.warn(`[${config.name}]`, ...args);
 	},
+	/**
+	* Print an error (suppressed only when logLevel is 'silent').
+	* 
+	* @param {...any} args
+	*/
 	error(...args) {
 		if (config.logLevel !== "silent") console.error(`[${config.name}]`, ...args);
 	}
@@ -472,6 +487,15 @@ function removeAttributes(element, attributes) {
 /** @type {Map<string, typeof import('./BaseComponent.js').BaseComponent>} */
 const componentMap = /* @__PURE__ */ new Map();
 const AutoInit = {
+	/**
+	* Register a component class so AutoInit can activate it from the DOM.
+	* The component's `componentName` is lowercased to form the attribute slug.
+	*
+	*   Modal     → listens for data-{dataPrefix}-modal="true"
+	*   Dropdown  → listens for data-{dataPrefix}-dropdown="true"
+	*
+	* @param {typeof import('./BaseComponent.js').BaseComponent} ComponentClass
+	*/
 	register(ComponentClass) {
 		const name = ComponentClass.componentName;
 		if (!name || name === "BaseComponent") {
@@ -481,9 +505,21 @@ const AutoInit = {
 		componentMap.set(name.toLowerCase(), ComponentClass);
 		logger.info(`AutoInit: registered "${name}" → data-${config.dataPrefix}-${name.toLowerCase()}`);
 	},
+	/**
+	* Register multiple component classes at once.
+	* 
+	* @param {Array<typeof import('./BaseComponent.js').BaseComponent>} classes
+	*/
 	registerAll(classes) {
 		classes.forEach((cls) => AutoInit.register(cls));
 	},
+	/**
+	* Scan a root element (default: document) for component enable attributes
+	* and initialize every component found that has not yet been initialized.
+	*
+	* @param {Document|Element} [root=document]
+	* @returns {import('./BaseComponent.js').BaseComponent[]} All newly created instances
+	*/
 	init(root = document) {
 		if (componentMap.size === 0) {
 			logger.warn("AutoInit.init(): no components are registered. Call AutoInit.registerAll() first.");
@@ -510,9 +546,19 @@ const AutoInit = {
 		logger.info(`AutoInit: scan complete — ${created.length} component(s) initialized`);
 		return created;
 	},
+	/**
+	* Returns all currently registered component slugs.
+	* 
+	* @returns {string[]}
+	*/
 	registeredNames() {
 		return [...componentMap.keys()];
 	},
+	/**
+	* Remove a component from the registry by name or slug (mainly for testing).
+	* 
+	* @param {string} nameOrSlug  e.g. 'Modal' or 'modal'
+	*/
 	unregister(nameOrSlug) {
 		if (!componentMap.delete(nameOrSlug.toLowerCase())) logger.warn(`AutoInit.unregister(): "${nameOrSlug}" was not registered.`);
 	}
@@ -704,33 +750,79 @@ function makeKey(el, componentName) {
 	return `${componentName}::${el.getAttribute(attr)}`;
 }
 const Registry = {
+	/**
+	* Store a component instance.
+	* 
+	* @param {Element} el
+	* @param {string} componentName
+	* @param {import('./BaseComponent.js').BaseComponent} instance
+	*/
 	set(el, componentName, instance) {
 		const key = makeKey(el, componentName);
 		if (store.has(key)) throw new Error(`${componentName} is already initialized on this element`);
 		store.set(key, instance);
 		logger.info(`Registry: registered <${componentName}>`);
 	},
+	/**
+	* Retrieve a component instance by Element reference.
+	* 
+	* @param {Element} el
+	* @param {string} componentName
+	* @returns {import('./BaseComponent.js').BaseComponent|undefined}
+	*/
 	getByElement(el, componentName) {
 		const attr = el.getAttribute(idAttr());
 		if (!attr) return void 0;
 		return store.get(`${componentName}::${attr}`);
 	},
+	/**
+	* Retrieve a component instance by CSS selector string.
+	* Resolves the first matching element in the document.
+	* 
+	* @param {string} selector
+	* @param {string} componentName
+	* @returns {import('./BaseComponent.js').BaseComponent|undefined}
+	*/
 	getBySelector(selector, componentName) {
 		const el = document.querySelector(selector);
 		if (!el) return void 0;
 		return Registry.getByElement(el, componentName);
 	},
+	/**
+	* Retrieve a component instance by either a CSS selector string or Element.
+	* 
+	* @param {string|Element} target
+	* @param {string} componentName
+	* @returns {import('./BaseComponent.js').BaseComponent|undefined}
+	*/
 	get(target, componentName) {
 		if (typeof target === "string") return Registry.getBySelector(target, componentName);
 		if (target instanceof Element) return Registry.getByElement(target, componentName);
 	},
+	/**
+	* Return all registered instances of a given component type.
+	* 
+	* @param {string} componentName
+	* @returns {import('./BaseComponent.js').BaseComponent[]}
+	*/
 	getAllOfType(componentName) {
 		const prefix = `${componentName}::`;
 		return [...store.entries()].filter(([key]) => key.startsWith(prefix)).map(([, instance]) => instance);
 	},
+	/**
+	* Return every instance across all component types.
+	* 
+	* @returns {import('./BaseComponent.js').BaseComponent[]}
+	*/
 	getAll() {
 		return [...store.values()];
 	},
+	/**
+	* Remove a component instance from the registry (called by destroy()).
+	* 
+	* @param {Element} el
+	* @param {string} componentName
+	*/
 	delete(el, componentName) {
 		const attr = el.getAttribute(idAttr());
 		if (!attr) return;
@@ -738,9 +830,17 @@ const Registry = {
 		el.removeAttribute(idAttr());
 		logger.info(`Registry: unregistered <${componentName}>`);
 	},
+	/**
+	* Remove all instances from the registry.
+	*/
 	clear() {
 		store.clear();
 	},
+	/**
+	* Dump the raw store map (for debugging).
+	* 
+	* @returns {Map<string, import('./BaseComponent.js').BaseComponent>}
+	*/
 	debug() {
 		return new Map(store);
 	}
@@ -1494,6 +1594,7 @@ var Dropdown = class extends BaseComponent {
 * @property {boolean} [showTitle] Whether to show the title attribute on the trigger element.
 * @property {boolean} [enableStorage] Whether to enable localStorage to persist the theme mode.
 * @property {string} [storageKey] The key used to store the theme mode in localStorage.
+* @property {'local' | 'session'} [storageType] The type of storage to use for persisting the theme mode.
 * @property {string} [className] The CSS class name for the dark theme.
 */
 /** @type {ThemeOptions} */
@@ -1506,6 +1607,7 @@ const defaults = {
 	showTitle: false,
 	enableStorage: true,
 	storageKey: "theme",
+	storageType: "local",
 	className: "dark"
 };
 /**
@@ -1518,7 +1620,8 @@ var Theme = class extends BaseComponent {
 	static get defaults() {
 		return defaults;
 	}
-	#storage = new DataStorage({ jsonEncode: false });
+	/** @type {DataStorage} */
+	#storage;
 	/** @type {Record<ThemeMode, ThemeMode>} */
 	#modes = {
 		light: "light",
@@ -1537,6 +1640,10 @@ var Theme = class extends BaseComponent {
 		this.#init();
 	}
 	#init() {
+		this.#storage = new DataStorage({
+			jsonEncode: false,
+			storageType: this.options.storageType === "session" ? "session" : "local"
+		});
 		this.#modes.auto = this.options.autoModeName;
 		if (this.options.enableStorage) this.#theme = this.#storage.get(this.options.storageKey, this.#modes.auto);
 		else this.#storage.remove(this.options.storageKey);
@@ -1668,6 +1775,7 @@ var Theme = class extends BaseComponent {
 	* @param {ThemeMode} mode
 	*/
 	change(mode) {
+		if (!(mode in this.#modes)) mode = this.#modes.auto;
 		if (this.options.enableStorage) if (mode === this.#modes.auto) this.#storage.remove(this.options.storageKey);
 		else this.#storage.set(this.options.storageKey, mode);
 		this.#shouldAddDarkClass(mode);
