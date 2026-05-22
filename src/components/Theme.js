@@ -28,6 +28,7 @@ import {
  * @property {string} [modeAttributeName] The data attribute name to store the current theme mode on the trigger element.
  * @property {string} [label] The label template for the trigger element, where :mode will be replaced with the current mode.
  * @property {boolean} [showTitle] Whether to show the title attribute on the trigger element.
+ * @property {boolean} [enableStorage] Whether to enable localStorage to persist the theme mode.
  * @property {string} [storageKey] The key used to store the theme mode in localStorage.
  * @property {string} [className] The CSS class name for the dark theme.
  */
@@ -40,6 +41,7 @@ const defaults = {
     modeAttributeName: 'data-mode',
     label: 'Switch to :mode theme',
     showTitle: false,
+    enableStorage: true,
     storageKey: 'theme',
     className: 'dark'
 };
@@ -65,6 +67,8 @@ export class Theme extends BaseComponent {
         auto: 'auto'
     };
 
+    #theme = this.#modes.auto;
+
     /**
      * Constructor
      * 
@@ -80,6 +84,12 @@ export class Theme extends BaseComponent {
 
     #init() {
         this.#modes.auto = /** @type {ThemeMode} */ (this.options.autoModeName);
+
+        if (this.options.enableStorage) {
+            this.#theme = this.#storage.get(this.options.storageKey, this.#modes.auto);
+        } else {
+            this.#storage.remove(this.options.storageKey);
+        }
 
          /** @param {Event} e */
         const _onTrigger = (e) => {
@@ -167,7 +177,7 @@ export class Theme extends BaseComponent {
 
     /** @returns {ThemeMode} */
     #getTheme() {
-        return this.#storage.get(this.options.storageKey, this.#modes.auto);
+        return this.#storage.get(this.options.storageKey, this.#theme);
     }
 
     /**
@@ -289,24 +299,18 @@ export class Theme extends BaseComponent {
      * @param {ThemeMode} mode
      */
     change(mode) {
-        // const isDarkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        // const shouldAddDarkClass = mode === this.#modes.dark || (mode === this.#modes.auto && isDarkPreferred);
-
         // Update storage
-        if (mode === this.#modes.auto) {
-            this.#storage.remove(this.options.storageKey);
-        } else {
-            this.#storage.set(this.options.storageKey, mode);
+        if (this.options.enableStorage) {            
+            if (mode === this.#modes.auto) {
+                this.#storage.remove(this.options.storageKey);
+            } else {
+                this.#storage.set(this.options.storageKey, mode);
+            }
         }
 
         // Update DOM classes
         this.#shouldAddDarkClass(mode);
-        // this.el.classList.toggle(this.options.className, shouldAddDarkClass);
-        // if (shouldAddDarkClass) {
-        //     addClasses(this.el, this.options.className);
-        // } else {
-        //     removeClasses(this.el, this.options.className);
-        // }
+        this.#theme = mode;
 
         // Update attribute
         setAttributes(this.el, {

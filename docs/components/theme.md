@@ -86,6 +86,21 @@ Checkboxes have only two states and are therefore considered toggle triggers. Si
 <button type="button" class="theme-trigger">Toggle Mode</button>
 ```
 
+## Disable Storage
+
+The theme mode persists due to it being stored in `localStorage` by default. If you however do not like this feature, you can disable it by changing the `enableStorage` option to `false`. You can also change this option by adding `data-enable-storage="{true|false}"` data attribute to the component element.
+
+<DemoBox src="/demos/theme/disable-storage.html" :show-theme="false"/>
+
+```html
+<html lang="en" data-ui-theme="enable" data-theme-trigger=".theme-trigger" data-theme-enable-storage="false">
+    <head>...</head>
+    <body>
+        <input class="theme-trigger" type="checkbox" role="switch">
+    </body>
+</html>
+```
+
 ## Light Theme Flash Fix
 
 To fix the light theme flash before `dark` mode loads, you must apply the theme preference before the browser renders the page. Add the following JavaScript in between the `<head>` tag of your pages to apply the theme before the component loads. The `<html>` element or `document.documentElement` was used in this example. You can however change it to the parent element you apply the Theme component to.
@@ -117,7 +132,8 @@ To fix the light theme flash before `dark` mode loads, you must apply the theme 
 | `modeAttributeName` | `string` | `data-mode` | The data attribute name to store the current theme mode on the trigger element. |
 | `label` | `string` | `Switch to :mode theme` | The label template for the trigger element, where `:mode` will be replaced with the current mode. This sets `aria-label` attribute on supported elements with the label text as its value. `<select>` inputs are excluded and must be set manually. |
 | `showTitle` | `boolean` | `false` | Sets a `title` attribute with the label text as its value. `<select>` inputs are excluded. |
-| `storageKey` | `string` | `theme` | The key used to store the theme mode in localStorage. |
+| `enableStorage` | `boolean` | `true` | Whether to enable `localStorage` to persist the theme mode. |
+| `storageKey` | `string` | `theme` | The key used to store the theme mode in `localStorage`. |
 | `className` | `string` | `dark` | The CSS class name for the dark theme. |
 
 ## JavaScript
