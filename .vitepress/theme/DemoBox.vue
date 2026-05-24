@@ -34,7 +34,7 @@ const props = defineProps({
 
 const isLoading = ref(true)
 const calculatedHeight = ref(props.height)
-const isDarkMode = ref(sessionStorage.getItem(props.id)) || ref(false) // Tracks true/false toggle state
+const isDarkMode = ref(sessionStorage.getItem(props.id) === 'dark') || ref(false) // Tracks true/false toggle state
 
 const containerRef = ref(null)
 const iframeRef = ref(null)

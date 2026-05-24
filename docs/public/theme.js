@@ -11,11 +11,15 @@
                     storageType: 'session'
                 });
             }
-
+            
             if (!reloaded) {
                 mode = sessionStorage.getItem(e.data?.id);
                 reloaded = true;
             } else {
                 mode = e.data?.uiTheme;
+            }
+
+            if (theme) {
+                theme.change(mode);
             }
         })
