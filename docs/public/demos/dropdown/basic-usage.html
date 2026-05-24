@@ -6,13 +6,20 @@
     <link rel="stylesheet" href="../../demos.css">
     <script type="module" src="../../theme.js"></script>
     <script type="module">
+        import { Dropdown } from '../../src/components/Dropdown.js';
+        import * as FloatingUI from 'https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.7.5/+esm';
 
+        const dropdown = new Dropdown('#basic-dropdown', {
+            floatingUI: FloatingUI
+        });
+        console.log(dropdown);
+        console.log(FloatingUI);
     </script>
 </head>
 <body>
     <div class="flex flex-col justify-center p-4">
         <div class="flex flex-col items-center justify-center gap-6 w-full max-w-lg mx-auto">
-            <button type="button" class="btn btn-default">
+            <button type="button" class="btn btn-default" id="basic-dropdown">
                 Dropdown
             </button>
             <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded w-full max-w-md h-96 sm:h-auto">

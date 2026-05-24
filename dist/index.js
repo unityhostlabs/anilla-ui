@@ -1525,13 +1525,18 @@ var DataStorage = class {
 * @property {{instance: Dropdown}} change Fired when the dropdown changes.
 */
 /**
+* @typedef {typeof import('@floating-ui/dom')} FloatingUI
+*/
+/**
 * @typedef {Object} DropdownOptions
 * @property {string | HTMLElement} [target] The CSS selector string or element for the dropdown.
+* @property {FloatingUI} [floatingUI] - The official Floating UI DOM module instance.
 * @property {string} [hiddenClass] The CSS class name for the hidden state.
 */
 /** @type {DropdownOptions} */
 const defaults$1 = {
 	target: void 0,
+	floatingUI: void 0,
 	hiddenClass: "hidden"
 };
 /**
@@ -1546,6 +1551,8 @@ var Dropdown = class extends BaseComponent {
 	}
 	/** @type {HTMLElement} */
 	#dropdown;
+	/** @type {FloatingUI} */
+	#floatingUI;
 	/**
 	* Constructor
 	* 
@@ -1559,6 +1566,7 @@ var Dropdown = class extends BaseComponent {
 	#init() {
 		if (!this.#getTargetElement()) throw new Error(`You must set a target or reference element for the dropdown.`);
 		this.#dropdown = this.#getTargetElement();
+		if (this.options.floatingUI) this.#floatingUI = this.options.floatingUI;
 	}
 	/** @returns {HTMLElement | null} */
 	#getTargetElement() {
@@ -1567,6 +1575,12 @@ var Dropdown = class extends BaseComponent {
 		if (typeof this.options.target === "string" && this.options.target.trim() !== "") target = query(this.options.target);
 		if (!target && this.el.nextElementSibling instanceof HTMLElement) target = this.el.nextElementSibling;
 		return target;
+	}
+	#hasFloatingUI() {
+		if (!this.#floatingUI || typeof this.#floatingUI !== "object") return false;
+		const hasComputePosition = typeof this.#floatingUI.computePosition === "function";
+		if (this.#floatingUI && !hasComputePosition) console.warn("Dropdown: The object provided to the \"floatingUI\" option is not a valid Floating UI module.");
+		return hasComputePosition;
 	}
 	destroy() {
 		super.destroy();

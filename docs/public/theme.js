@@ -13,15 +13,9 @@
             }
 
             if (!reloaded) {
-                console.log('new');
-                // console.log(e.data?.uiTheme);
                 mode = sessionStorage.getItem(e.data?.id);
                 reloaded = true;
             } else {
                 mode = e.data?.uiTheme;
             }
-            // let mode = sessionStorage.getItem(e.data?.id);
-            // console.log(mode);
-            // console.log(e.data);
-            theme.change(mode);
         })

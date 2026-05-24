@@ -1,5 +1,6 @@
 import { BaseComponent } from '../core/BaseComponent.js';
 import { query, queryAll, addClasses, removeClasses } from '../core/utils.js';
+// import { computePosition, offset, flip, shift, limitShift, autoUpdate } from '@floating-ui/dom';
 
 /**
  * @typedef {Object} DropdownEvents
@@ -7,14 +8,20 @@ import { query, queryAll, addClasses, removeClasses } from '../core/utils.js';
  */
 
 /**
+ * @typedef {typeof import('@floating-ui/dom')} FloatingUI
+ */
+
+/**
  * @typedef {Object} DropdownOptions
  * @property {string | HTMLElement} [target] The CSS selector string or element for the dropdown.
+ * @property {FloatingUI} [floatingUI] - The official Floating UI DOM module instance.
  * @property {string} [hiddenClass] The CSS class name for the hidden state.
  */
 
 /** @type {DropdownOptions} */
 const defaults = {
     target: undefined,
+    floatingUI: undefined,
     hiddenClass: 'hidden'
 };
 
@@ -32,6 +39,9 @@ export class Dropdown extends BaseComponent {
 
     /** @type {HTMLElement} */
     #dropdown;
+
+    /** @type {FloatingUI} */
+    #floatingUI;
 
     /**
      * Constructor
@@ -54,6 +64,7 @@ export class Dropdown extends BaseComponent {
         }
 
         this.#dropdown = this.#getTargetElement();
+        if (this.options.floatingUI) this.#floatingUI = this.options.floatingUI;
     }
 
     /** @returns {HTMLElement | null} */
@@ -70,6 +81,20 @@ export class Dropdown extends BaseComponent {
         }
         
         return target;
+    }
+
+    #hasFloatingUI() {
+        if (!this.#floatingUI || typeof this.#floatingUI !== 'object') {
+            return false;
+        }
+
+        const hasComputePosition = typeof this.#floatingUI.computePosition === 'function';
+
+        if (this.#floatingUI && !hasComputePosition) {
+            console.warn('Dropdown: The object provided to the "floatingUI" option is not a valid Floating UI module.');
+        }
+
+        return hasComputePosition;
     }
 
     // --- Public API
