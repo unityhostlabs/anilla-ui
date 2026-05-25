@@ -1,5 +1,5 @@
 <template>
-    <div ref="containerRef" class="resizable-container">
+    <div class="demo-box">
         <div v-if="showTheme" class="demo-toolbar">
             <button 
                 :id="id"
@@ -8,17 +8,19 @@
                 {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
             </button>
         </div>
-
-        <div v-if="isLoading" class="demo-spinner-overlay">
-            <div class="demo-spinner"></div>
+        <div ref="containerRef" class="resizable-container">
+    
+            <div v-if="isLoading" class="demo-spinner-overlay">
+                <div class="demo-spinner"></div>
+            </div>
+    
+            <iframe ref="iframeRef" :src="src" :style="{
+                height: calculatedHeight,
+                pointerEvents: isDragging ? 'none' : 'auto',
+                opacity: isLoading ? 0 : 1
+            }" loading="lazy" @load="onIframeLoad"></iframe>
+            <div class="resize-handle" @mousedown="startResize"></div>
         </div>
-
-        <iframe ref="iframeRef" :src="src" :style="{
-            height: calculatedHeight,
-            pointerEvents: isDragging ? 'none' : 'auto',
-            opacity: isLoading ? 0 : 1
-        }" loading="lazy" @load="onIframeLoad"></iframe>
-        <div class="resize-handle" @mousedown="startResize"></div>
     </div>
 </template>
 
@@ -105,6 +107,11 @@ onUnmounted(() => {
     min-width: 320px;
     margin-right: 16px;
     display: block;
+}
+
+.demo-box {
+    display: flex;
+    flex-direction: column;
 }
 
 .demo-toolbar {

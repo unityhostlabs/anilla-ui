@@ -277,6 +277,7 @@ export function getAttribute(element, name) {
  * 
  * Converts camelCase attribute names to kebab-case (e.g., dataId -> data-id).
  * 
+ * @param {HTMLElement | null} element - The target DOM element to set attributes on.
  * @param {Object.<string, *|{condition: boolean, value: *}>} attributes - Key-value pairs of attributes to set. 
  * Values can be direct or objects with a condition. If an object has a falsy condition, the attribute will be skipped.
  * 
@@ -351,5 +352,112 @@ export function removeAttributes(element, attributes) {
         element.removeAttribute(
             attribute.replace(/([A-Z])/g, '-$1').toLowerCase()
         );
+    }
+}
+
+/**
+ * Sets CSS styles on a DOM element, with support for conditional style setting and removal.
+ * 
+ * When a value is null or undefined, the style property is removed instead of being set.
+ * Empty strings are valid and will be set as-is. Standard string-based CSS variables starting 
+ * with '--' are preserved exactly as written.
+ * 
+ * @param {HTMLElement | null} element - The target DOM element to set styles on.
+ * @param {Record<string, string | null | undefined | {condition: any, value: string | null | undefined}>} styleProps - 
+ *   Key-value pairs of CSS properties to set. Keys can be in camelCase (e.g., backgroundColor), kebab-case (e.g., background-color),
+ *   or CSS custom property format (e.g., --theme-color).
+ *   Values can be direct strings/nullish values, or objects with a condition. If an object has a falsy condition, 
+ *   the style property modification is skipped entirely.
+ *   If a value or its conditional value resolves to null or undefined, the style property is removed from the element.
+ * 
+ * @example
+ * // Basic usage - always sets styles
+ * const box = document.querySelector('.box');
+ * setStyles(box, {
+ *     backgroundColor: 'blue',
+ *     padding: '10px',
+ *     '--local-accent': 'orange'
+ * });
+ * // Result: style="background-color: blue; padding: 10px; --local-accent: orange;"
+ * 
+ * @example
+ * // Removing styles with null/undefined
+ * setStyles(box, {
+ *     backgroundColor: null,  // Removes background-color
+ *     padding: undefined      // Removes padding
+ * });
+ * 
+ * @example
+ * // With conditional styles
+ * const isHidden = true;
+ * const isActive = false;
+ * 
+ * setStyles(box, {
+ *     display: { condition: isHidden, value: 'none' },
+ *     opacity: { condition: isActive, value: '1' },
+ *     color: 'red'
+ * });
+ * // Result: display="none" and color="red" are handled (opacity is skipped entirely)
+ * 
+ * @example
+ * // Mixed with empty strings
+ * setStyles(box, {
+ *     backgroundColor: '',    // Valid - sets empty string
+ *     marginTop: { condition: true, value: '' }  // Valid - sets empty string
+ * });
+ */
+export function setStyles(element, styleProps) {
+    if (!element?.style || !styleProps) return;
+
+    for (const key in styleProps) {
+        if (!Object.prototype.hasOwnProperty.call(styleProps, key)) continue;
+
+        const propValue = styleProps[key];
+        let finalValue = propValue;
+
+        // Process conditional wrapper objects
+        if (propValue && typeof propValue === 'object' && 'condition' in propValue) {
+            if (!propValue.condition) continue;
+            finalValue = propValue.value;
+        }
+
+        // Convert key names from camelCase to kebab-case, preserving explicit CSS variables
+        const kebabKey = key.startsWith('--') 
+            ? key 
+            : key.replace(/([A-Z])/g, '-$1').toLowerCase();
+
+        if (finalValue === null || finalValue === undefined) {
+            element.style.removeProperty(kebabKey);
+        } else {
+            // Inline cast explicitly tells the compiler finalValue is a string here
+            element.style.setProperty(kebabKey, /** @type {string} */ (finalValue));
+        }
+    }
+}
+
+/**
+ * Removes an array of CSS properties or custom variables from a DOM element.
+ * 
+ * @param {HTMLElement | null} element - The target DOM element to remove styles from.
+ * @param {string[]} properties - An array of property names to remove. Supports camelCase, kebab-case, and CSS variables.
+ * 
+ * @example
+ * // Basic removal using mixed naming conventions
+ * const box = document.querySelector('.box');
+ * removeStyles(box, ['backgroundColor', 'padding', '--local-accent']);
+ * // Result: background-color, padding, and the CSS variable are removed from the style attribute
+ */
+export function removeStyles(element, properties) {
+    if (!element?.style || !Array.isArray(properties)) return;
+
+    for (let i = 0; i < properties.length; i++) {
+        const key = properties[i];
+        if (!key) continue;
+
+        const kebabKey = key.startsWith('--') 
+            ? key 
+            : key.replace(/([A-Z])/g, '-$1').toLowerCase();
+
+        element.style.removeProperty(kebabKey);
     }
 }

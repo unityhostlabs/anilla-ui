@@ -38,6 +38,7 @@
     --color-gray-900: oklch(21% 0.034 264.665);
     --color-white: #fff;
     --spacing: 0.25rem;
+    --container-3xs: 16rem;
     --container-md: 28rem;
     --container-lg: 32rem;
     --font-weight-medium: 500;
@@ -215,6 +216,12 @@
   .visible {
     visibility: visible;
   }
+  .absolute {
+    position: absolute;
+  }
+  .relative {
+    position: relative;
+  }
   .static {
     position: static;
   }
@@ -251,20 +258,17 @@
   .inline {
     display: inline;
   }
-  .h-96 {
-    height: calc(var(--spacing) * 96);
-  }
   .h-screen {
     height: 100vh;
   }
   .w-full {
     width: 100%;
   }
+  .max-w-3xs {
+    max-width: var(--container-3xs);
+  }
   .max-w-lg {
     max-width: var(--container-lg);
-  }
-  .max-w-md {
-    max-width: var(--container-md);
   }
   .scale-95 {
     --tw-scale-x: 95%;
@@ -353,11 +357,6 @@
   .group-aria-pressed\:inline {
     &:is(:where(.group)[aria-pressed="true"] *) {
       display: inline;
-    }
-  }
-  .sm\:h-auto {
-    @media (width >= 40rem) {
-      height: auto;
     }
   }
   .sm\:flex-row {

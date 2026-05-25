@@ -1,10 +1,18 @@
 import { BaseComponent } from '../core/BaseComponent.js';
-import { query, queryAll, addClasses, removeClasses } from '../core/utils.js';
+import { query, addClasses, removeClasses, setStyles, removeStyles } from '../core/utils.js';
 // import { computePosition, offset, flip, shift, limitShift, autoUpdate } from '@floating-ui/dom';
 
 /**
  * @typedef {Object} DropdownEvents
  * @property {{instance: Dropdown}} change Fired when the dropdown changes.
+ */
+
+/**
+ * @typedef {object} Placements
+ * @property {'top' | 'top-start' | 'top-end'} top
+ * @property {'right' | 'right-start' | 'right-end'} right
+ * @property {'bottom' | 'bottom-start' | 'bottom-end'} bottom
+ * @property {'left' | 'left-start' | 'left-end'} left
  */
 
 /**
@@ -14,6 +22,10 @@ import { query, queryAll, addClasses, removeClasses } from '../core/utils.js';
 /**
  * @typedef {Object} DropdownOptions
  * @property {string | HTMLElement} [target] The CSS selector string or element for the dropdown.
+ * @property {boolean} [autoClose=true] Whether the dropdown should automatically close when clicking outside.
+ * @property {number} [offsetDistance=8] The distance in pixels between the dropdown and the reference element.
+ * @property {number} [offsetSkidding=0] The horizontal offset in pixels for the dropdown.
+ * @property {Placements[keyof Placements]} [placement='bottom-start'] The placement of the dropdown relative to the reference element (e.g., 'top', 'bottom', 'left', 'right', 'top-start', etc.).
  * @property {FloatingUI} [floatingUI] - The official Floating UI DOM module instance.
  * @property {string} [hiddenClass] The CSS class name for the hidden state.
  */
@@ -21,6 +33,10 @@ import { query, queryAll, addClasses, removeClasses } from '../core/utils.js';
 /** @type {DropdownOptions} */
 const defaults = {
     target: undefined,
+    autoClose: true,
+    offsetDistance: 8,
+    offsetSkidding: 0,
+    placement: 'bottom-start',
     floatingUI: undefined,
     hiddenClass: 'hidden'
 };
@@ -42,6 +58,8 @@ export class Dropdown extends BaseComponent {
 
     /** @type {FloatingUI} */
     #floatingUI;
+
+    #isVisible = false;
 
     /**
      * Constructor
@@ -65,6 +83,15 @@ export class Dropdown extends BaseComponent {
 
         this.#dropdown = this.#getTargetElement();
         if (this.options.floatingUI) this.#floatingUI = this.options.floatingUI;
+
+        /** @param {Event} e */
+        const _onToggle = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggle();
+        };
+
+        this.addListener(this.el, 'click', _onToggle);
     }
 
     /** @returns {HTMLElement | null} */
@@ -97,7 +124,44 @@ export class Dropdown extends BaseComponent {
         return hasComputePosition;
     }
 
+    #setPosition() {
+        if (!this.#hasFloatingUI()) {
+            const rect = this.el.getBoundingClientRect();
+            console.log(rect);
+            setStyles(this.#dropdown, {
+                position: 'absolute',
+                top: `${rect.bottom + this.options.offsetDistance}px`,
+                left: `${rect.left + this.options.offsetSkidding}px`
+            });
+            return;
+        }
+    }
+
     // --- Public API
+
+    show() {
+        this.#setPosition();
+        removeClasses(this.#dropdown, this.options.hiddenClass);
+        this.#isVisible = true;
+        console.log('show');
+    }
+
+    hide() {
+        addClasses(this.#dropdown, this.options.hiddenClass);
+        removeStyles(this.#dropdown, ['position', 'top', 'left']);
+        this.#isVisible = false;
+        console.log('hide');
+    }
+
+    toggle() {
+        if (this.#isVisible) {
+            this.hide();
+
+            return;
+        }
+
+        this.show();
+    }
 
     destroy() {
         super.destroy();
@@ -105,7 +169,7 @@ export class Dropdown extends BaseComponent {
 
     // --- Public Accessors
 
-    get accessorName() {
-        return 'accessor';
+    get isVisible() {
+        return this.#isVisible;
     }
 }
