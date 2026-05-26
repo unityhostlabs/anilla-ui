@@ -39,7 +39,6 @@
     --color-white: #fff;
     --spacing: 0.25rem;
     --container-3xs: 16rem;
-    --container-md: 28rem;
     --container-lg: 32rem;
     --font-weight-medium: 500;
     --radius-lg: 0.5rem;
@@ -249,6 +248,9 @@
   .mr-1 {
     margin-right: calc(var(--spacing) * 1);
   }
+  .mr-2 {
+    margin-right: calc(var(--spacing) * 2);
+  }
   .flex {
     display: flex;
   }
@@ -257,6 +259,10 @@
   }
   .inline {
     display: inline;
+  }
+  .size-6 {
+    width: calc(var(--spacing) * 6);
+    height: calc(var(--spacing) * 6);
   }
   .h-screen {
     height: 100vh;

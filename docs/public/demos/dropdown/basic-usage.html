@@ -10,6 +10,7 @@
         import * as FloatingUI from 'https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.7.5/+esm';
 
         const dropdown = new Dropdown('#basic-dropdown', {
+            autoClose: 'outside'
             //floatingUI: FloatingUI
         });
         console.log(dropdown);
@@ -20,13 +21,17 @@
     <div class="flex flex-col justify-center p-4">
         <div class="flex flex-col items-center justify-center gap-6 w-full max-w-lg mx-auto">
             <button type="button" class="btn btn-default" id="basic-dropdown">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
                 Dropdown
             </button>
             <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded w-full max-w-3xs hidden">
                 <div>
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Quidem impedit beatae nostrum harum? Nesciunt quos voluptate, nulla aperiam exercitationem
+                    Lorem ipsum dolor sit amet <a href="#">consectetur</a> adipisicing elit. Quidem impedit beatae nostrum harum? Nesciunt quos voluptate, nulla aperiam exercitationem
                 </div>
             </div>
+            <button type="button">Dummy</button>
         </div>
     </div>
 </body>

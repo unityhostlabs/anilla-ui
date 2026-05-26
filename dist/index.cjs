@@ -1628,7 +1628,7 @@ var DataStorage = class {
 /**
 * @typedef {Object} DropdownOptions
 * @property {string | HTMLElement} [target] The CSS selector string or element for the dropdown.
-* @property {boolean} [autoClose=true] Whether the dropdown should automatically close when clicking outside.
+* @property {boolean | 'inside' | 'outside'} [autoClose=true] Whether the dropdown should automatically close when clicking inside or outside.
 * @property {number} [offsetDistance=8] The distance in pixels between the dropdown and the reference element.
 * @property {number} [offsetSkidding=0] The horizontal offset in pixels for the dropdown.
 * @property {Placements[keyof Placements]} [placement='bottom-start'] The placement of the dropdown relative to the reference element (e.g., 'top', 'bottom', 'left', 'right', 'top-start', etc.).
@@ -1675,12 +1675,19 @@ var Dropdown = class extends BaseComponent {
 		this.#dropdown = this.#getTargetElement();
 		if (this.options.floatingUI) this.#floatingUI = this.options.floatingUI;
 		/** @param {Event} e */
-		const _onToggle = (e) => {
-			e.preventDefault();
-			e.stopPropagation();
-			this.toggle();
+		const _onClick = (e) => {
+			e.type;
+			const target = e.target;
+			if (!this.#isVisible && this.el.contains(target)) {
+				this.show();
+				return;
+			}
+			if (this.#isVisible) {
+				if (![true, "outside"].includes(this.options.autoClose) && !this.#dropdown.contains(target)) return;
+				this.hide();
+			}
 		};
-		this.addListener(this.el, "click", _onToggle);
+		this.addListener(document, "click", _onClick);
 	}
 	/** @returns {HTMLElement | null} */
 	#getTargetElement() {
