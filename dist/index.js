@@ -1670,23 +1670,40 @@ var Dropdown = class extends BaseComponent {
 		this.#init();
 	}
 	#init() {
-		if (!this.#getTargetElement()) throw new Error(`You must set a target or reference element for the dropdown.`);
+		if (!this.#getTargetElement()) throw new Error(`Target element or dropdown not found.`);
 		this.#dropdown = this.#getTargetElement();
 		if (this.options.floatingUI) this.#floatingUI = this.options.floatingUI;
 		/** @param {Event} e */
-		const _onClick = (e) => {
-			e.type;
-			const target = e.target;
-			if (!this.#isVisible && this.el.contains(target)) {
-				this.show();
-				return;
-			}
-			if (this.#isVisible) {
-				if (![true, "outside"].includes(this.options.autoClose) && !this.#dropdown.contains(target)) return;
-				this.hide();
-			}
+		const _onToggle = (e) => {
+			e.preventDefault();
+			this.toggle();
 		};
-		this.addListener(document, "click", _onClick);
+		/** @param {KeyboardEvent} e */
+		const _onKeydown = (e) => {
+			if (["Escape"].includes(e.key) && this.#isVisible) this.hide();
+		};
+		/** @param {FocusEvent} e */
+		const _onClose = (e) => {
+			const isFocus = e.type === "focusout" && e.relatedTarget !== null;
+			const clicked = isFocus ? e.relatedTarget : e.target;
+			if (!this.#isVisible) return;
+			if (this.el.contains(clicked)) return;
+			const isInsideDropdown = this.#dropdown.contains(clicked);
+			const autoClose = this.options.autoClose;
+			if (isFocus && isInsideDropdown) return;
+			if (isFocus && ![true, "outside"].includes(autoClose)) return;
+			if (!isFocus) {
+				if (isInsideDropdown && ![true, "inside"].includes(autoClose)) return;
+				if (!isInsideDropdown && ![true, "outside"].includes(autoClose)) return;
+			}
+			this.hide();
+		};
+		this.addListener(this.el, "click", _onToggle);
+		this.addListener(window, "click", _onClose);
+		this.addListener(this.el, "keydown", _onKeydown);
+		this.addListener(this.#dropdown, "keydown", _onKeydown);
+		this.addListener(this.el, "focusout", _onClose);
+		this.addListener(this.#dropdown, "focusout", _onClose);
 	}
 	/** @returns {HTMLElement | null} */
 	#getTargetElement() {
@@ -1705,7 +1722,6 @@ var Dropdown = class extends BaseComponent {
 	#setPosition() {
 		if (!this.#hasFloatingUI()) {
 			const rect = this.el.getBoundingClientRect();
-			console.log(rect);
 			setStyles(this.#dropdown, {
 				position: "absolute",
 				top: `${rect.bottom + this.options.offsetDistance}px`,

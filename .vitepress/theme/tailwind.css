@@ -217,6 +217,12 @@
 
 /* --- Utilities --- */
 @utility highlight-* {
-    --tw-shadow-color: --value(--color-*);
-    box-shadow: inset 0 1px 0 0 var(--tw-shadow-color);
+    --alpha-value: calc(--modifier(integer) * 1%);
+    --highlight-color: --alpha(--value(--color-*) / var(--alpha-value, 100%));
+    
+    /* 1. Define the unique shadow slice */
+    --tw-highlight-shadow: inset 0 1px 0 0 var(--highlight-color);
+    
+    /* 2. Inject it safely alongside Tailwind's core layout/ring variables */
+    box-shadow: var(--tw-highlight-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow, 0 0 #0000);
 }

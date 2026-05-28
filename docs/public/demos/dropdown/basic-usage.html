@@ -10,7 +10,7 @@
         import * as FloatingUI from 'https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.7.5/+esm';
 
         const dropdown = new Dropdown('#basic-dropdown', {
-            autoClose: 'outside'
+            autoClose: true
             //floatingUI: FloatingUI
         });
         console.log(dropdown);
@@ -26,10 +26,21 @@
                 </svg>
                 Dropdown
             </button>
-            <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded w-full max-w-3xs hidden">
-                <div>
-                    Lorem ipsum dolor sit amet <a href="#">consectetur</a> adipisicing elit. Quidem impedit beatae nostrum harum? Nesciunt quos voluptate, nulla aperiam exercitationem
-                </div>
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg ring ring-white/10 w-44 hidden">
+                <ul class="p-2 text-sm text-body font-medium" aria-labelledby="dropdownDefaultButton">
+                    <li>
+                        <a href="#" class="inline-flex items-center w-full p-2 rounded-md dark:hover:bg-white/5">Dashboard</a>
+                    </li>
+                    <li>
+                        <a href="#" class="inline-flex items-center w-full p-2 rounded-md dark:hover:bg-white/5">Settings</a>
+                    </li>
+                    <li>
+                        <a href="#" class="inline-flex items-center w-full p-2 rounded-md dark:hover:bg-white/5">Earnings</a>
+                    </li>
+                    <li>
+                        <a href="#" class="inline-flex items-center w-full p-2 rounded-md dark:hover:bg-white/5">Sign out</a>
+                    </li>
+                </ul>
             </div>
             <button type="button">Dummy</button>
         </div>

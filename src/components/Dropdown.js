@@ -77,7 +77,7 @@ export class Dropdown extends BaseComponent {
     #init() {
         if (!this.#getTargetElement()) {
             throw new Error(
-                `You must set a target or reference element for the dropdown.`
+                `Target element or dropdown not found.`
             );
         }
 
@@ -90,28 +90,47 @@ export class Dropdown extends BaseComponent {
             this.toggle();
         };
 
-        /** @param {Event} e */
-        const _onClick = (e) => {
-            const isFocus = e.type === 'focusout';
-            const target = /** @type {HTMLElement} */ (e.target);
-
-            if (!this.#isVisible && this.el.contains(target)) {
-                this.show();
-
-                return;
-            }
-
-            if (this.#isVisible) {
-                if (![true, 'outside'].includes(this.options.autoClose) && !this.#dropdown.contains(target)) return;
-
-                // if (target === this.#dropdown || this.#dropdown.contains(target)) return;
-
+        /** @param {KeyboardEvent} e */
+        const _onKeydown = (e) => {
+            if (['Escape'].includes(e.key) && this.#isVisible) {
                 this.hide();
             }
         };
 
-        // this.addListener(this.el, 'click', _onToggle);
-        this.addListener(document, 'click', _onClick);
+        /** @param {FocusEvent} e */
+        const _onClose = (e) => {
+            const isFocus = e.type === 'focusout' && e.relatedTarget !== null;
+            const clicked = /** @type {HTMLElement} */ (isFocus ? e.relatedTarget : e.target);
+
+            if (!this.#isVisible) return;
+
+            // Return if the interaction is inside the main element container
+            if (this.el.contains(clicked)) return;
+
+            const isInsideDropdown = this.#dropdown.contains(clicked);
+            const autoClose = this.options.autoClose;
+
+            // Return for keyboard focusout inside the dropdown
+            if (isFocus && isInsideDropdown) return;
+
+            // Return for keyboard focusout when autoClose is not configured for outside
+            if (isFocus && ![true, 'outside'].includes(autoClose)) return;
+
+            // Return for mouse clicks when autoClose conditions are not met
+            if (!isFocus) {
+                if (isInsideDropdown && ![true, 'inside'].includes(autoClose)) return;
+                if (!isInsideDropdown && ![true, 'outside'].includes(autoClose)) return;
+            }
+
+            this.hide();
+        };
+
+        this.addListener(this.el, 'click', _onToggle);
+        this.addListener(window, 'click', _onClose);
+        this.addListener(this.el, 'keydown', _onKeydown);
+        this.addListener(this.#dropdown, 'keydown', _onKeydown);
+        this.addListener(this.el, 'focusout', _onClose);
+        this.addListener(this.#dropdown, 'focusout', _onClose);
     }
 
     /** @returns {HTMLElement | null} */
@@ -147,12 +166,12 @@ export class Dropdown extends BaseComponent {
     #setPosition() {
         if (!this.#hasFloatingUI()) {
             const rect = this.el.getBoundingClientRect();
-            console.log(rect);
             setStyles(this.#dropdown, {
                 position: 'absolute',
                 top: `${rect.bottom + this.options.offsetDistance}px`,
                 left: `${rect.left + this.options.offsetSkidding}px`
             });
+
             return;
         }
     }
