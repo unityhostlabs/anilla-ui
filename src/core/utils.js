@@ -461,3 +461,32 @@ export function removeStyles(element, properties) {
         element.style.removeProperty(kebabKey);
     }
 }
+
+/**
+ * Checks if a DOM element has a specific computed style property and optional value.
+ * 
+ * @param {Element} element - The DOM element to inspect.
+ * @param {string} property - The CSS property name (camelCase or kebab-case).
+ * @param {string} [value] - The expected CSS value to match against.
+ * @returns {boolean} True if the property exists (and matches the value if provided), otherwise false.
+ * 
+ * @example
+ * // Check if an element has a display property set
+ * const element = document.querySelector('.box');
+ * const hasDisplay = hasComputedStyle(element, 'display');
+ * 
+ * @example
+ * // Check for an exact style match (Note: colors return as rgb/rgba)
+ * const isHidden = hasComputedStyle(element, 'display', 'none');
+ * const isRed = hasComputedStyle(element, 'background-color', 'rgb(255, 0, 0)');
+ */
+export function hasComputedStyle(element, property, value) {
+    if (!element || element.nodeType !== 1) return false;
+
+    const computedValue = window.getComputedStyle(element)[property];
+
+    if (!computedValue) return false;
+    if (value === undefined) return true;
+
+    return computedValue === value;
+}

@@ -269,18 +269,6 @@ export class Transition {
     }
 
     /**
-     * Whether either an enter or leave transition exists.
-     * 
-     * @returns {boolean}
-     */
-    exists() {
-        return !!(
-            this.#config.transitionEnter ||
-            this.#config.transitionLeave
-        );
-    }
-
-    /**
      * Immediately cancel the active transition.
      */
     cancel() {
@@ -311,6 +299,18 @@ export class Transition {
     }
 
     // --- Public Accessors
+
+    /**
+     * Whether either an enter or leave transition exists.
+     * 
+     * @returns {boolean}
+     */
+    get exists() {
+        return !!(
+            this.#config.transitionEnter ||
+            this.#config.transitionLeave
+        );
+    }
 
     /**
      * @returns {boolean}
@@ -348,8 +348,6 @@ export class Transition {
     }
 
     /**
-     * Whether a transition is currently active.
-     * 
      * @returns {boolean}
      */
     get isBusy() {

@@ -10,40 +10,60 @@
         import * as FloatingUI from 'https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.7.5/+esm';
 
         const dropdown = new Dropdown('#basic-dropdown', {
-            autoClose: true
-            //floatingUI: FloatingUI
+            autoClose: true,
+            placement: 'bottom',
+            floatingUI: FloatingUI,
+            transitionEnter: 'transition-all duration-200 origin-top-left',
+            transitionEnterFrom: 'opacity-0 translate-y-4',
+            transitionEnterTo: 'opacity-100 translate-y-0',
+            transitionLeave: 'transition-all duration-150 origin-top-left',
+            transitionLeaveFrom: 'opacity-100 translate-y-0',
+            transitionLeaveTo: 'opacity-0 translate-y-4'
         });
-        console.log(dropdown);
-        console.log(FloatingUI);
+        // console.log(dropdown);
+        // console.log(FloatingUI);
+        dropdown.on('show', () => console.log('Dropdown is about to be shown'));
+        dropdown.on('shown', () => console.log('Dropdown is shown'));
+        dropdown.on('hide', () => console.log('Dropdown is about to be hidden'));
+        dropdown.on('hidden', () => console.log('Dropdown is hidden'));
+        dropdown.on('toggle', () => console.log('Dropdown toggled'));
+
+        document.querySelector('#click-me').addEventListener('click', () => {
+            dropdown.hide();
+        });
     </script>
 </head>
 <body>
+    <p class="h-64">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea atque sunt illo alias iste libero eos corporis nesciunt pariatur aperiam asperiores placeat, laborum quod aspernatur itaque quis. Qui, cupiditate aliquam!</p>
     <div class="flex flex-col justify-center p-4">
-        <div class="flex flex-col items-center justify-center gap-6 w-full max-w-lg mx-auto">
-            <button type="button" class="btn btn-default" id="basic-dropdown">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Dropdown
-            </button>
-            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg ring ring-white/10 w-44 hidden">
-                <ul class="p-2 text-sm text-body font-medium" aria-labelledby="dropdownDefaultButton">
-                    <li>
-                        <a href="#" class="inline-flex items-center w-full p-2 rounded-md dark:hover:bg-white/5">Dashboard</a>
-                    </li>
-                    <li>
-                        <a href="#" class="inline-flex items-center w-full p-2 rounded-md dark:hover:bg-white/5">Settings</a>
-                    </li>
-                    <li>
-                        <a href="#" class="inline-flex items-center w-full p-2 rounded-md dark:hover:bg-white/5">Earnings</a>
-                    </li>
-                    <li>
-                        <a href="#" class="inline-flex items-center w-full p-2 rounded-md dark:hover:bg-white/5">Sign out</a>
-                    </li>
-                </ul>
+        <div class="flex items-center justify-center gap-6 w-full max-w-lg mx-auto">
+            <button type="button" class="btn btn-default" id="click-me">Button</button>
+            <div class="relative">
+                <button type="button" class="btn btn-default" id="basic-dropdown">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Dropdown
+                </button>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
+                    <ul class="p-2 text-sm text-body font-medium" aria-labelledby="dropdownDefaultButton">
+                        <li>
+                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Dashboard</a>
+                        </li>
+                        <li>
+                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Settings</a>
+                        </li>
+                        <li>
+                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</a>
+                        </li>
+                        <li>
+                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Sign Out</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <button type="button">Dummy</button>
         </div>
     </div>
+    <p class="h-64">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea atque sunt illo alias iste libero eos corporis nesciunt pariatur aperiam asperiores placeat, laborum quod aspernatur itaque quis. Qui, cupiditate aliquam!</p>
 </body>
 </html>

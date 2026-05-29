@@ -146,6 +146,7 @@ var utils_exports = /* @__PURE__ */ __exportAll({
 	coerceType: () => coerceType,
 	getAttribute: () => getAttribute,
 	hasAttribute: () => hasAttribute,
+	hasComputedStyle: () => hasComputedStyle,
 	interpolate: () => interpolate,
 	isEmpty: () => isEmpty,
 	objectHasValue: () => objectHasValue,
@@ -525,6 +526,31 @@ function removeStyles(element, properties) {
 		const kebabKey = key.startsWith("--") ? key : key.replace(/([A-Z])/g, "-$1").toLowerCase();
 		element.style.removeProperty(kebabKey);
 	}
+}
+/**
+* Checks if a DOM element has a specific computed style property and optional value.
+* 
+* @param {Element} element - The DOM element to inspect.
+* @param {string} property - The CSS property name (camelCase or kebab-case).
+* @param {string} [value] - The expected CSS value to match against.
+* @returns {boolean} True if the property exists (and matches the value if provided), otherwise false.
+* 
+* @example
+* // Check if an element has a display property set
+* const element = document.querySelector('.box');
+* const hasDisplay = hasComputedStyle(element, 'display');
+* 
+* @example
+* // Check for an exact style match (Note: colors return as rgb/rgba)
+* const isHidden = hasComputedStyle(element, 'display', 'none');
+* const isRed = hasComputedStyle(element, 'background-color', 'rgb(255, 0, 0)');
+*/
+function hasComputedStyle(element, property, value) {
+	if (!element || element.nodeType !== 1) return false;
+	const computedValue = window.getComputedStyle(element)[property];
+	if (!computedValue) return false;
+	if (value === void 0) return true;
+	return computedValue === value;
 }
 //#endregion
 //#region src/core/AutoInit.js
@@ -1118,14 +1144,6 @@ var Transition = class {
 		return this.#execute("transitionLeave", element, callback);
 	}
 	/**
-	* Whether either an enter or leave transition exists.
-	* 
-	* @returns {boolean}
-	*/
-	exists() {
-		return !!(this.#config.transitionEnter || this.#config.transitionLeave);
-	}
-	/**
 	* Immediately cancel the active transition.
 	*/
 	cancel() {
@@ -1145,6 +1163,14 @@ var Transition = class {
 	*/
 	event(phase) {
 		return `${this.type}${phase}`;
+	}
+	/**
+	* Whether either an enter or leave transition exists.
+	* 
+	* @returns {boolean}
+	*/
+	get exists() {
+		return !!(this.#config.transitionEnter || this.#config.transitionLeave);
 	}
 	/**
 	* @returns {boolean}
@@ -1177,8 +1203,6 @@ var Transition = class {
 		return this.state === "cancelled";
 	}
 	/**
-	* Whether a transition is currently active.
-	* 
 	* @returns {boolean}
 	*/
 	get isBusy() {
@@ -1613,7 +1637,12 @@ var DataStorage = class {
 //#region src/components/Dropdown.js
 /**
 * @typedef {Object} DropdownEvents
-* @property {{instance: Dropdown}} change Fired when the dropdown changes.
+* @property {{instance: Dropdown}} show Emitted when the dropdown show method is called.
+* @property {{instance: Dropdown}} shown Emitted when the dropdown is shown.
+* @property {{instance: Dropdown}} hide Emitted when the dropdown hide method is called.
+* @property {{instance: Dropdown}} hidden Emitted when the dropdown is hidden.
+* @property {{instance: Dropdown}} toggle Emitted when the dropdown is toggled.
+* @property {{instance: Dropdown}} destroy Emitted when the dropdown instance is destroyed.
 */
 /**
 * @typedef {object} Placements
@@ -1659,6 +1688,8 @@ var Dropdown = class extends BaseComponent {
 	#dropdown;
 	/** @type {FloatingUI} */
 	#floatingUI;
+	/** @type {() => void | null} */
+	#cleanupPositioner = null;
 	#isVisible = false;
 	/**
 	* Constructor
@@ -1674,6 +1705,11 @@ var Dropdown = class extends BaseComponent {
 		if (!this.#getTargetElement()) throw new Error(`Target element or dropdown not found.`);
 		this.#dropdown = this.#getTargetElement();
 		if (this.options.floatingUI) this.#floatingUI = this.options.floatingUI;
+		setAttributes(this.el, {
+			ariaHaspopup: "true",
+			ariaExpanded: "false"
+		});
+		if (this.#dropdown.id) setAttributes(this.el, { ariaControls: this.#dropdown.id });
 		/** @param {Event} e */
 		const _onToggle = (e) => {
 			e.preventDefault();
@@ -1722,39 +1758,79 @@ var Dropdown = class extends BaseComponent {
 	}
 	#setPosition() {
 		if (!this.#hasFloatingUI()) {
-			const rect = this.el.getBoundingClientRect();
 			setStyles(this.#dropdown, {
-				position: "absolute",
-				top: `${rect.bottom + this.options.offsetDistance}px`,
-				left: `${rect.left + this.options.offsetSkidding}px`
+				top: `${this.el.offsetHeight + this.options.offsetDistance}px`,
+				left: `${this.options.offsetSkidding}px`
 			});
 			return;
 		}
+		const { computePosition, offset, flip, shift, autoUpdate } = this.#floatingUI;
+		const updatePosition = async () => {
+			computePosition(this.el, this.#dropdown, {
+				placement: this.options.placement,
+				middleware: [
+					offset({
+						mainAxis: this.options.offsetDistance,
+						crossAxis: this.options.offsetSkidding
+					}),
+					flip(),
+					shift({ padding: 8 })
+				]
+			}).then(({ x, y }) => {
+				setStyles(this.#dropdown, {
+					left: `${x}px`,
+					top: `${y}px`
+				});
+			});
+		};
+		if (typeof autoUpdate === "function") this.#cleanupPositioner = autoUpdate(this.el, this.#dropdown, updatePosition);
+		else updatePosition();
 	}
 	show() {
+		if (this.transition.isBusy) return;
+		this.emit("show");
 		this.#setPosition();
 		removeClasses(this.#dropdown, this.options.hiddenClass);
+		this.el.setAttribute("aria-expanded", "true");
 		this.#isVisible = true;
-		console.log("show");
+		if (this.transition.exists) this.transition.enter(this.#dropdown, () => this.emit("shown"));
 	}
 	hide() {
-		addClasses(this.#dropdown, this.options.hiddenClass);
-		removeStyles(this.#dropdown, [
-			"position",
-			"top",
-			"left"
-		]);
-		this.#isVisible = false;
-		console.log("hide");
+		if (this.transition.isBusy) return;
+		this.emit("hide");
+		const hideDropdown = () => {
+			addClasses(this.#dropdown, this.options.hiddenClass);
+			removeStyles(this.#dropdown, ["top", "left"]);
+			this.el.setAttribute("aria-expanded", "false");
+			this.#isVisible = false;
+			if (this.#cleanupPositioner) {
+				this.#cleanupPositioner();
+				this.#cleanupPositioner = null;
+			}
+			this.emit("hidden");
+		};
+		if (this.transition.exists) {
+			this.transition.leave(this.#dropdown, () => hideDropdown());
+			return;
+		}
+		hideDropdown();
 	}
 	toggle() {
 		if (this.#isVisible) {
 			this.hide();
+			this.emit("toggle");
 			return;
 		}
 		this.show();
+		this.emit("toggle");
 	}
 	destroy() {
+		if (this.#cleanupPositioner) this.#cleanupPositioner();
+		removeAttributes(this.el, [
+			"aria-haspopup",
+			"aria-expanded",
+			"aria-controls"
+		]);
 		super.destroy();
 	}
 	get isVisible() {
@@ -1769,6 +1845,7 @@ var Dropdown = class extends BaseComponent {
 /**
 * @typedef {Object} ThemeEvents
 * @property {{instance: Theme}} change Fired when the theme changes.
+* @property {{instance: Theme}} destroy Fired when the theme instance is destroyed.
 */
 /**
 * @typedef {Object} ThemeOptions

@@ -1,10 +1,22 @@
 import { BaseComponent } from '../core/BaseComponent.js';
-import { query, addClasses, removeClasses, setStyles, removeStyles } from '../core/utils.js';
-// import { computePosition, offset, flip, shift, limitShift, autoUpdate } from '@floating-ui/dom';
+import { 
+    query, 
+    addClasses, 
+    removeClasses, 
+    setStyles, 
+    removeStyles, 
+    setAttributes, 
+    removeAttributes 
+} from '../core/utils.js';
 
 /**
  * @typedef {Object} DropdownEvents
- * @property {{instance: Dropdown}} change Fired when the dropdown changes.
+ * @property {{instance: Dropdown}} show Emitted when the dropdown show method is called.
+ * @property {{instance: Dropdown}} shown Emitted when the dropdown is shown.
+ * @property {{instance: Dropdown}} hide Emitted when the dropdown hide method is called.
+ * @property {{instance: Dropdown}} hidden Emitted when the dropdown is hidden.
+ * @property {{instance: Dropdown}} toggle Emitted when the dropdown is toggled.
+ * @property {{instance: Dropdown}} destroy Emitted when the dropdown instance is destroyed.
  */
 
 /**
@@ -59,6 +71,9 @@ export class Dropdown extends BaseComponent {
     /** @type {FloatingUI} */
     #floatingUI;
 
+    /** @type {() => void | null} */
+    #cleanupPositioner = null;
+
     #isVisible = false;
 
     /**
@@ -83,6 +98,15 @@ export class Dropdown extends BaseComponent {
 
         this.#dropdown = this.#getTargetElement();
         if (this.options.floatingUI) this.#floatingUI = this.options.floatingUI;
+
+        setAttributes(this.el, {
+            ariaHaspopup: 'true',
+            ariaExpanded: 'false'
+        });
+        
+        if (this.#dropdown.id) {
+            setAttributes(this.el, { ariaControls: this.#dropdown.id });
+        }
 
         /** @param {Event} e */
         const _onToggle = (e) => {
@@ -165,44 +189,104 @@ export class Dropdown extends BaseComponent {
 
     #setPosition() {
         if (!this.#hasFloatingUI()) {
-            const rect = this.el.getBoundingClientRect();
             setStyles(this.#dropdown, {
-                position: 'absolute',
-                top: `${rect.bottom + this.options.offsetDistance}px`,
-                left: `${rect.left + this.options.offsetSkidding}px`
+                top: `${this.el.offsetHeight + this.options.offsetDistance}px`,
+                left: `${this.options.offsetSkidding}px`
             });
 
             return;
+        }
+
+        const { computePosition, offset, flip, shift, autoUpdate } = this.#floatingUI;
+
+        const updatePosition = async () => {
+            computePosition(this.el, this.#dropdown, {
+                placement: this.options.placement,
+                middleware: [
+                    offset({
+                        mainAxis: this.options.offsetDistance,
+                        crossAxis: this.options.offsetSkidding
+                    }),
+                    flip(),
+                    shift({ padding: 8 })
+                ]
+            }).then(({ x, y }) => {
+                setStyles(this.#dropdown, {
+                    left: `${x}px`,
+                    top: `${y}px`
+                });
+            });
+        };
+
+        // Listen dynamically to window resizing/scrolling
+        if (typeof autoUpdate === 'function') {
+            this.#cleanupPositioner = autoUpdate(this.el, this.#dropdown, updatePosition);
+        } else {
+            updatePosition();
         }
     }
 
     // --- Public API
 
     show() {
+        if (this.transition.isBusy) return;
+        this.emit('show');
         this.#setPosition();
         removeClasses(this.#dropdown, this.options.hiddenClass);
+        this.el.setAttribute('aria-expanded', 'true');
         this.#isVisible = true;
-        console.log('show');
+
+        if (this.transition.exists) {
+            this.transition.enter(this.#dropdown, () => this.emit('shown'));
+        }
     }
 
     hide() {
-        addClasses(this.#dropdown, this.options.hiddenClass);
-        removeStyles(this.#dropdown, ['position', 'top', 'left']);
-        this.#isVisible = false;
-        console.log('hide');
+        if (this.transition.isBusy) return;
+        this.emit('hide');
+
+        const hideDropdown = () => {
+            addClasses(this.#dropdown, this.options.hiddenClass);
+            removeStyles(this.#dropdown, ['top', 'left']);
+            this.el.setAttribute('aria-expanded', 'false');
+            this.#isVisible = false;
+
+            // Remove Floating UI's autoUpdate window loop listeners
+            if (this.#cleanupPositioner) {
+                this.#cleanupPositioner();
+                this.#cleanupPositioner = null;
+            }
+
+            this.emit('hidden');           
+        };
+
+        if (this.transition.exists) {
+            this.transition.leave(this.#dropdown, () => hideDropdown());
+
+            return;
+        }
+
+        hideDropdown();
     }
 
     toggle() {
         if (this.#isVisible) {
             this.hide();
+            this.emit('toggle');
 
             return;
         }
 
         this.show();
+        this.emit('toggle');
     }
 
     destroy() {
+        if (this.#cleanupPositioner) {
+            this.#cleanupPositioner();
+        }
+
+        removeAttributes(this.el, ['aria-haspopup', 'aria-expanded', 'aria-controls']);
         super.destroy();
     }
 

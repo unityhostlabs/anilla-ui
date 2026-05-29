@@ -21,9 +21,11 @@ By default, the component targets the immediate next sibling element. If your dr
 Note that your dropdown element must be initially hidden using the utility class specified by your `hiddenClass` configuration option (which defaults to `'hidden'`).
 
 ```html
-<button type="button" data-ui-dropdown="true">...</button>
-<div class="hidden">
-    <!-- your dropdown content -->
+<div class="relative">
+    <button type="button" data-ui-dropdown="true">...</button>
+    <div class="absolute z-10 hidden">
+        <!-- your dropdown content -->
+    </div>
 </div>
 ```
 

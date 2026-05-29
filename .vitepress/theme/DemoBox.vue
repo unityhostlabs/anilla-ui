@@ -1,9 +1,19 @@
 <template>
     <div class="demo-box">
-        <div v-if="showTheme" class="demo-toolbar">
+        <div class="demo-toolbar">
             <button 
+                class="toolbar-btn reload-btn" 
+                title="Reload Preview"
+                @click="reloadIframe">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+            </button>
+
+            <button 
+                v-if="showTheme"
+                :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
                 :id="id"
-                :class="['theme-btn', { active: isDarkMode }]"
+                :class="['toolbar-btn', 'theme-btn', { active: isDarkMode }]"
                 @click="toggleTheme">
                 {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
             </button>
@@ -36,7 +46,7 @@ const props = defineProps({
 
 const isLoading = ref(true)
 const calculatedHeight = ref(props.height)
-const isDarkMode = ref(sessionStorage.getItem(props.id) === 'dark') || ref(false) // Tracks true/false toggle state
+const isDarkMode = ref(sessionStorage.getItem(props.id) === 'dark') // Simplified fallback behavior
 
 const containerRef = ref(null)
 const iframeRef = ref(null)
@@ -50,9 +60,23 @@ const onIframeLoad = () => {
     sendTheme()
 }
 
+// Forces the iframe to reload and triggers the loading overlay
+const reloadIframe = () => {
+    if (!iframeRef.value) return
+    isLoading.value = true
+    
+    // Appending a timestamp or re-assigning src forces a hard reload
+    const currentSrc = iframeRef.value.src
+    iframeRef.value.src = currentSrc
+}
+
 // Switches the boolean state and updates the iframe
 const toggleTheme = () => {
     isDarkMode.value = !isDarkMode.value
+    // Save state to sessionStorage for persistence
+    if (props.id) {
+        sessionStorage.setItem(props.id, isDarkMode.value ? 'dark' : 'light')
+    }
     sendTheme()
 }
 
@@ -116,12 +140,14 @@ onUnmounted(() => {
 
 .demo-toolbar {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     margin-bottom: 8px;
     justify-content: end;
+    align-items: center;
 }
 
-.theme-btn {
+/* Shared toolbar button styles */
+.toolbar-btn {
     padding: 2px 10px;
     border-radius: 4px;
     border: 1px solid var(--vp-c-gutter);
@@ -129,6 +155,19 @@ onUnmounted(() => {
     color: var(--vp-c-text-2);
     cursor: pointer;
     font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.toolbar-btn:hover {
+    background-color: var(--vp-c-bg-soft);
+    color: var(--vp-c-text-1);
+}
+
+.reload-btn {
+    padding: 4px 8px;
 }
 
 .theme-btn.active {

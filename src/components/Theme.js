@@ -18,6 +18,7 @@ import {
 /**
  * @typedef {Object} ThemeEvents
  * @property {{instance: Theme}} change Fired when the theme changes.
+ * @property {{instance: Theme}} destroy Fired when the theme instance is destroyed.
  */
 
 /**
