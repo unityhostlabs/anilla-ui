@@ -12,7 +12,7 @@
         const dropdown = new Dropdown('#basic-dropdown', {
             autoClose: true,
             placement: 'bottom',
-            floatingUI: FloatingUI,
+            // floatingUI: FloatingUI,
             transitionEnter: 'transition-all duration-200 origin-top-left',
             transitionEnterFrom: 'opacity-0 translate-y-4',
             transitionEnterTo: 'opacity-100 translate-y-0',
@@ -20,7 +20,7 @@
             transitionLeaveFrom: 'opacity-100 translate-y-0',
             transitionLeaveTo: 'opacity-0 translate-y-4'
         });
-        // console.log(dropdown);
+        console.log(dropdown);
         // console.log(FloatingUI);
         dropdown.on('show', () => console.log('Dropdown is about to be shown'));
         dropdown.on('shown', () => console.log('Dropdown is shown'));
@@ -34,7 +34,6 @@
     </script>
 </head>
 <body>
-    <p class="h-64">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea atque sunt illo alias iste libero eos corporis nesciunt pariatur aperiam asperiores placeat, laborum quod aspernatur itaque quis. Qui, cupiditate aliquam!</p>
     <div class="flex flex-col justify-center p-4">
         <div class="flex items-center justify-center gap-6 w-full max-w-lg mx-auto">
             <button type="button" class="btn btn-default" id="click-me">Button</button>
@@ -48,7 +47,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
                     <ul class="p-2 text-sm text-body font-medium" aria-labelledby="dropdownDefaultButton">
                         <li>
-                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Dashboard</a>
+                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">View Details</a>
                         </li>
                         <li>
                             <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Settings</a>
@@ -57,13 +56,12 @@
                             <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</a>
                         </li>
                         <li>
-                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Sign Out</a>
+                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Terminate</a>
                         </li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
-    <p class="h-64">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea atque sunt illo alias iste libero eos corporis nesciunt pariatur aperiam asperiores placeat, laborum quod aspernatur itaque quis. Qui, cupiditate aliquam!</p>
 </body>
 </html>

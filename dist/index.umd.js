@@ -1287,6 +1287,13 @@
 		#el;
 		/** @type {O & EventCallbacks<T, any>} */
 		#options;
+		/**
+		* Merged defaults from Transition and the component subclass.
+		* Computed once at construction and reused by setOptions().
+		* 
+		* @type {O & EventCallbacks<T, any>}
+		*/
+		#allDefaults;
 		/** @type {EventBus} */
 		#bus = new EventBus();
 		/** @type {DOMEventStore} */
@@ -1331,10 +1338,13 @@
 		get el() {
 			return this.#el;
 		}
+		/**
+		* @typedef {O & EventCallbacks<T, any> & import('./Transition.js').TransitionOptions} OptionsPayload
+		*/
 		/** 
 		* Merged options object (static defaults + user options).
 		* 
-		* @returns {O & EventCallbacks<T, any> & import('./Transition.js').TransitionOptions}
+		* @returns {OptionsPayload}
 		*/
 		get options() {
 			return this.#options;
@@ -1350,6 +1360,62 @@
 		get isDestroyed() {
 			return this.#destroyed;
 		}
+		/**
+		* Merge new values into the current options and emit an 'optionsUpdated'
+		* event. Only keys already present in the component's defaults (plus
+		* transition keys) are accepted — unknown keys are warned and discarded,
+		* keeping the same validation contract as data attribute parsing.
+		*
+		* If the update includes options that have DOM side effects (e.g. adding or
+		* removing a keydown listener because escClose changed), override
+		* _onOptionsUpdate(changed) in the subclass to handle those re-applications.
+		*
+		* @param {OptionsPayload} [newOptions]
+		* @returns {OptionsPayload} The updated options object
+		*
+		* @example
+		* // Disable dismissal during a form submission
+		* modal.setOptions({ backdropClose: false, escClose: false });
+		*
+		* // Re-enable after submission completes
+		* modal.setOptions({ backdropClose: true, escClose: true });
+		*
+		* // Update transition classes at runtime
+		* modal.setOptions({ transitionEnter: 'transition duration-500' });
+		*/
+		setOptions(newOptions = {}) {
+			if (this.#destroyed) {
+				logger.warn(`${this.name}: setOptions() called after destroy() — ignored.`);
+				return this.#options;
+			}
+			const allDefaults = this.#allDefaults;
+			const valid = {};
+			const invalid = [];
+			for (const [key, value] of Object.entries(newOptions)) if (key in allDefaults) valid[key] = value;
+			else invalid.push(key);
+			if (invalid.length) logger.warn(`${this.name}: setOptions() received unknown keys: ${invalid.join(", ")} — ignored.`);
+			if (Object.keys(valid).length === 0) return this.#options;
+			const previous = { ...this.#options };
+			Object.assign(this.#options, valid);
+			const transitionKeys = Object.keys(Transition.defaults);
+			if (Object.keys(valid).some((k) => transitionKeys.includes(k))) this.#transition = new Transition(this.#options);
+			this._onOptionsUpdate(valid, previous);
+			this.emit("optionsUpdated", {
+				options: this.#options,
+				changed: valid,
+				previous
+			});
+			return this.#options;
+		}
+		/**
+		* Called by setOptions() after the options object has been updated.
+		* Override in subclasses to re-apply any side effects that depend on
+		* the changed options (e.g. rebinding or removing DOM listeners).
+		*
+		* @param {OptionsPayload} changed   Only the keys that were updated
+		* @param {OptionsPayload} previous  The full options object before the update
+		*/
+		_onOptionsUpdate(changed, previous) {}
 		/**
 		* Subscribe to a component lifecycle / custom event.
 		* 
@@ -1414,7 +1480,7 @@
 		*       onChange: ({ instance, from, to }) => { ... }
 		*   });
 		*
-		* @param {Extract<keyof T, string> | 'destroy'} event - Custom event name or core lifecycle event
+		* @param {Extract<keyof T, string> | 'destroy' | 'optionsUpdated'} event - Custom event name or core lifecycle event
 		* @param {Record<string, any>} [payload={}] - Additional event parameters to merge alongside the instance
 		*/
 		emit(event, payload = {}) {
@@ -1789,6 +1855,11 @@
 			if (typeof autoUpdate === "function") this.#cleanupPositioner = autoUpdate(this.el, this.#dropdown, updatePosition);
 			else updatePosition();
 		}
+		/**
+		* @param {Parameters<BaseComponent["_onOptionsUpdate"]>[0] & DropdownOptions} changed
+		* @param {Parameters<BaseComponent["_onOptionsUpdate"]>[1] & DropdownOptions} previous
+		*/
+		_onOptionsUpdate(changed, previous) {}
 		show() {
 			if (this.transition.isBusy) return;
 			this.emit("show");

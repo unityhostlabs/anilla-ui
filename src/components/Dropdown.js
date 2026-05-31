@@ -217,13 +217,21 @@ export class Dropdown extends BaseComponent {
                 });
             });
         };
-
+        
         // Listen dynamically to window resizing/scrolling
         if (typeof autoUpdate === 'function') {
             this.#cleanupPositioner = autoUpdate(this.el, this.#dropdown, updatePosition);
         } else {
             updatePosition();
         }
+    }
+
+    /**
+     * @param {Parameters<BaseComponent["_onOptionsUpdate"]>[0] & DropdownOptions} changed
+     * @param {Parameters<BaseComponent["_onOptionsUpdate"]>[1] & DropdownOptions} previous
+     */
+    _onOptionsUpdate(changed, previous) {
+        
     }
 
     // --- Public API
