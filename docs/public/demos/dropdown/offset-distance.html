@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../demos.css">
+    <script type="module" src="../../theme.js"></script>
+    <script type="module">
+        import { Dropdown } from '../../src/components/Dropdown.js';
+        import * as FloatingUI from 'https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.7.5/+esm';
+
+        const dropdown = new Dropdown('#offset-distance', {
+            offsetDistance: 0,
+            floatingUI: FloatingUI
+        });
+    </script>
+</head>
+<body>
+    <div class="flex flex-col justify-center p-4">
+        <div class="flex items-center justify-center gap-6 w-full max-w-lg mx-auto">
+            <div class="relative">
+                <button type="button" class="btn btn-default" id="offset-distance">Dropdown</button>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
+                    <ul class="p-2 text-sm text-body font-medium" aria-labelledby="dropdownDefaultButton">
+                        <li>
+                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">View Details</a>
+                        </li>
+                        <li>
+                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Settings</a>
+                        </li>
+                        <li>
+                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</a>
+                        </li>
+                        <li>
+                            <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Terminate</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

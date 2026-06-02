@@ -276,6 +276,8 @@ export class Dropdown extends BaseComponent {
 
         if (this.transition.exists) {
             this.transition.enter(this.#dropdown, () => this.emit('shown'));
+        } else {
+            this.emit('shown');
         }
     }
 
@@ -301,11 +303,9 @@ export class Dropdown extends BaseComponent {
 
         if (this.transition.exists) {
             this.transition.leave(this.#dropdown, () => hideDropdown());
-
-            return;
+        } else {
+            hideDropdown();
         }
-
-        hideDropdown();
     }
 
     toggle() {

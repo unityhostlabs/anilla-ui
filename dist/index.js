@@ -440,6 +440,14 @@ function removeAttributes(element, attributes) {
 	for (const attribute of attributes) element.removeAttribute(attribute.replace(/([A-Z])/g, "-$1").toLowerCase());
 }
 /**
+* @template {string} S
+* @typedef {S extends `${infer T}${infer U}` ? `${T extends Uppercase<T> ? `-${Lowercase<T>}` : T}${KebabCase<U>}` : S} KebabCase
+*/
+/**
+* @typedef {keyof CSSStyleDeclaration & string} CamelKeys
+* @typedef {CamelKeys | KebabCase<CamelKeys> | `--${string}`} AllCssKeys
+*/
+/**
 * Sets CSS styles on a DOM element, with support for conditional style setting and removal.
 * 
 * When a value is null or undefined, the style property is removed instead of being set.
@@ -447,7 +455,7 @@ function removeAttributes(element, attributes) {
 * with '--' are preserved exactly as written.
 * 
 * @param {HTMLElement | null} element - The target DOM element to set styles on.
-* @param {Record<string, string | null | undefined | {condition: any, value: string | null | undefined}>} styleProps - 
+* @param {Partial<Record<AllCssKeys, string | null | undefined | {condition: any, value: string | null | undefined}>>} styleProps - 
 *   Key-value pairs of CSS properties to set. Keys can be in camelCase (e.g., backgroundColor), kebab-case (e.g., background-color),
 *   or CSS custom property format (e.g., --theme-color).
 *   Values can be direct strings/nullish values, or objects with a condition. If an object has a falsy condition, 
@@ -1893,6 +1901,7 @@ var Dropdown = class extends BaseComponent {
 		this.el.setAttribute("aria-expanded", "true");
 		this.#isVisible = true;
 		if (this.transition.exists) this.transition.enter(this.#dropdown, () => this.emit("shown"));
+		else this.emit("shown");
 	}
 	hide() {
 		if (this.transition.isBusy) return;
@@ -1908,11 +1917,8 @@ var Dropdown = class extends BaseComponent {
 			}
 			this.emit("hidden");
 		};
-		if (this.transition.exists) {
-			this.transition.leave(this.#dropdown, () => hideDropdown());
-			return;
-		}
-		hideDropdown();
+		if (this.transition.exists) this.transition.leave(this.#dropdown, () => hideDropdown());
+		else hideDropdown();
 	}
 	toggle() {
 		if (this.#isVisible) {

@@ -322,6 +322,9 @@
   .justify-center {
     justify-content: center;
   }
+  .justify-end {
+    justify-content: flex-end;
+  }
   .gap-6 {
     gap: calc(var(--spacing) * 6);
   }

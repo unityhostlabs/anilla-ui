@@ -93,9 +93,7 @@ This can be configured via JavaScript options or inline using the `data-storage-
 
 <DemoBox src="/demos/theme/session-storage.html" :show-theme="false"/>
 
-::: code-group
-
-```html [HTML]
+```html
 <html lang="en" data-ui-theme="enable" data-theme-trigger=".theme-trigger" data-theme-storage-type="session">
     <head>...</head>
     <body>
@@ -104,26 +102,13 @@ This can be configured via JavaScript options or inline using the `data-storage-
 </html>
 ```
 
-```js [JS]
-import { Theme } from '@anilla/ui';
-
-const theme = new Theme(element, {
-    trigger: '.theme-trigger',
-    storageType: 'session'
-});
-```
-
-:::
-
 ## Disable Storage
 
 By default, the theme preference persists across sessions because it is saved to `localStorage`. If you want to disable this behavior, you can set the `enableStorage` option to `false`. This can also be configured inline by adding the `data-enable-storage="false"` attribute to the component element.
 
 <DemoBox src="/demos/theme/disable-storage.html" :show-theme="false"/>
 
-::: code-group
-
-```html [HTML]
+```html
 <html lang="en" data-ui-theme="enable" data-theme-trigger=".theme-trigger" data-theme-enable-storage="false">
     <head>...</head>
     <body>
@@ -131,17 +116,6 @@ By default, the theme preference persists across sessions because it is saved to
     </body>
 </html>
 ```
-
-```js [JS]
-import { Theme } from '@anilla/ui';
-
-const theme = new Theme(element, {
-    trigger: '.theme-trigger',
-    enableStorage: false
-});
-```
-
-:::
 
 ## Light Theme Flash Fix
 
