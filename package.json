@@ -29,6 +29,7 @@
     "release:alpha": "node release-alpha.js"
   },
   "devDependencies": {
+    "@floating-ui/dom": "^1.7.6",
     "@tailwindcss/cli": "^4.3.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.3.0",
@@ -79,8 +80,5 @@
   "publishConfig": {
     "access": "public",
     "tag": "alpha"
-  },
-  "dependencies": {
-    "@floating-ui/dom": "^1.7.6"
   }
 }

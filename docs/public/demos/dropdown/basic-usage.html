@@ -12,7 +12,7 @@
         const dropdown = new Dropdown('#basic-dropdown', {
             autoClose: true,
             placement: 'bottom',
-            // floatingUI: FloatingUI,
+            floatingUI: FloatingUI,
             transitionEnter: 'transition-all duration-200 origin-top-left',
             transitionEnterFrom: 'opacity-0 translate-y-4',
             transitionEnterTo: 'opacity-100 translate-y-0',
@@ -29,7 +29,26 @@
         dropdown.on('toggle', () => console.log('Dropdown toggled'));
 
         document.querySelector('#click-me').addEventListener('click', () => {
-            dropdown.hide();
+            const positions = ['top', 'bottom', 'left', 'right', 'top-start', 'top-end', 'bottom-start', 'bottom-end', 'left-start', 'left-end', 'right-start', 'right-end'];
+            const randomPosition = positions[Math.floor(Math.random() * positions.length)];
+
+            // dropdown.hide();
+            // dropdown.setOptions({
+            //     placement: randomPosition,
+            //     autoClose: false,
+            //     floatingUI: undefined,
+            //     onShow: ({ instance }) => {
+            //         console.log('Dropdown is about to be shown (updated callback)', instance);
+            //     }
+            // });
+            // console.log(dropdown.domEvents);
+            dropdown.options = {
+                placement: randomPosition,
+                // autoClose: false,
+                onShow: ({ instance }) => {
+                    console.log('Dropdown is about to be shown (updated callback)', instance);
+                }
+            };
         });
     </script>
 </head>

@@ -17,8 +17,8 @@ import {
 
 /**
  * @typedef {Object} ThemeEvents
- * @property {{instance: Theme}} change Fired when the theme changes.
- * @property {{instance: Theme}} destroy Fired when the theme instance is destroyed.
+ * @property {{instance: Theme}} change Emitted when the theme changes.
+ * @property {{instance: Theme}} destroy Emitted when the theme instance is destroyed.
  */
 
 /**
@@ -33,6 +33,8 @@ import {
  * @property {string} [storageKey] The key used to store the theme mode in localStorage.
  * @property {'local' | 'session'} [storageType] The type of storage to use for persisting the theme mode.
  * @property {string} [className] The CSS class name for the dark theme.
+ * @property {function(ThemeEvents['change']): void} [onChange] Called when the theme changes.
+ * @property {function(ThemeEvents['destroy']): void} [onDestroy] Called when the theme instance is destroyed.
  */
 
 /** @type {ThemeOptions} */
@@ -46,7 +48,9 @@ const defaults = {
     enableStorage: true,
     storageKey: 'theme',
     storageType: 'local',
-    className: 'dark'
+    className: 'dark',
+    onChange: undefined,
+    onDestroy: undefined,
 };
 
 /**

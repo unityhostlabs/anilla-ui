@@ -268,15 +268,12 @@
   .inline-flex {
     display: inline-flex;
   }
-  .table {
-    display: table;
-  }
   .size-6 {
     width: calc(var(--spacing) * 6);
     height: calc(var(--spacing) * 6);
   }
-  .h-64 {
-    height: calc(var(--spacing) * 64);
+  .h-full {
+    height: 100%;
   }
   .h-screen {
     height: 100vh;
@@ -289,12 +286,6 @@
   }
   .max-w-lg {
     max-width: var(--container-lg);
-  }
-  .flex-shrink {
-    flex-shrink: 1;
-  }
-  .border-collapse {
-    border-collapse: collapse;
   }
   .origin-top-left {
     transform-origin: 0 0;
@@ -321,9 +312,6 @@
   }
   .transform {
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
-  }
-  .resize {
-    resize: both;
   }
   .flex-col {
     flex-direction: column;
@@ -366,9 +354,6 @@
   }
   .lowercase {
     text-transform: lowercase;
-  }
-  .underline {
-    text-decoration-line: underline;
   }
   .opacity-0 {
     opacity: 0%;

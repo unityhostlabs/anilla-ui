@@ -90,14 +90,6 @@ export class BaseComponent {
     /** @type {O & EventCallbacks<T, any>} */
     #options;
 
-    /**
-     * Merged defaults from Transition and the component subclass.
-     * Computed once at construction and reused by setOptions().
-     * 
-     * @type {O & EventCallbacks<T, any>}
-     */
-    #allDefaults;
-
     /** @type {EventBus} */
     #bus = new EventBus();
 
@@ -193,6 +185,15 @@ export class BaseComponent {
         return this.#options;
     }
 
+    /** 
+     * Set the component's options.
+     * 
+     * @param {OptionsPayload} newOptions
+     */
+    set options(newOptions) {
+        this.setOptions(newOptions);
+    }
+
     /**
      * The Transition instance for this component.
      * Use transition.enter(el) / transition.leave(el) to run CSS transitions.
@@ -236,14 +237,12 @@ export class BaseComponent {
             return this.#options;
         }
 
-        const allDefaults = this.#allDefaults;
-
         // Validate — only accept keys declared in defaults
         const valid = {};
         const invalid = [];
 
         for (const [key, value] of Object.entries(newOptions)) {
-            if (key in allDefaults) {
+            if (key in this.#options) {
                 valid[key] = value;
             } else {
                 invalid.push(key);

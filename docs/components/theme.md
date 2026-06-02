@@ -165,19 +165,19 @@ To fix the light theme flash before `dark` mode loads, you must apply the theme 
 
 <!--@include: @/partials/options-intro.md-->
 
-| Name | Type | Default | Description |
-| ---- | ---- | ------- | ----------- |
-| `parent` | `HTMLElement`, `string` | `document.documentElement` | The parent element or selector to apply the theme class to. |
-| `trigger` | `HTMLElement`, `string` | `undefined` | The element or selector that triggers the theme change. |
-| `autoModeName` | `string` | `auto` | The name of the auto mode. You can change it to some else like 'system' or 'device'. Remember to update the `value` or `data-mode` attributes of your triggers. |
-| `attributeName` | `string` | `data-theme` | The data attribute name to store the current theme mode. |
-| `modeAttributeName` | `string` | `data-mode` | The data attribute name to store the current theme mode on the trigger element. |
-| `label` | `string` | `Switch to :mode theme` | The label template for the trigger element, where `:mode` will be replaced with the current mode. This sets `aria-label` attribute on supported elements with the label text as its value. `<select>` inputs are excluded and must be set manually. |
-| `showTitle` | `boolean` | `false` | Sets a `title` attribute with the label text as its value. `<select>` inputs are excluded. |
-| `enableStorage` | `boolean` | `true` | Whether to enable `localStorage` to persist the theme mode across sessions. |
-| `storageKey` | `string` | `theme` | The key used to store the theme mode in `localStorage`. |
-| `storageType` | `string` | `local` | Determines the storage mechanism used to persist the theme. Accepts `local` (uses `localStorage`) or `session` (uses `sessionStorage`). |
-| `className` | `string` | `dark` | The CSS class name for the dark theme. |
+| Name | Type | Description |
+| --- | --- | --- |
+| `parent` | `HTMLElement`, `string` | The parent element or selector to apply the theme class to. |
+| `trigger` | `HTMLElement`, `string` | The element or selector that triggers the theme change. |
+| `autoModeName` | `string` | The name of the auto mode. You can change it to some else like 'system' or 'device'. Remember to update the `value` or `data-mode` attributes of your triggers. |
+| `attributeName` | `string` | The data attribute name to store the current theme mode. |
+| `modeAttributeName` | `string` | The data attribute name to store the current theme mode on the trigger element. |
+| `label` | `string` | The label template for the trigger element, where `:mode` will be replaced with the current mode. This sets `aria-label` attribute on supported elements with the label text as its value. `<select>` inputs are excluded and must be set manually. |
+| `showTitle` | `boolean` | Sets a `title` attribute with the label text as its value. `<select>` inputs are excluded. |
+| `enableStorage` | `boolean` | Whether to enable `localStorage` to persist the theme mode across sessions. |
+| `storageKey` | `string` | The key used to store the theme mode in `localStorage`. |
+| `storageType` | `string` | Determines the storage mechanism used to persist the theme. Accepts `local` (uses `localStorage`) or `session` (uses `sessionStorage`). |
+| `className` | `string` | The CSS class name for the dark theme. |
 
 ## JavaScript
 
@@ -211,7 +211,7 @@ const theme = new Theme(element, options);
 
 ### Methods 
 
-The following methods are available for this component:
+The following methods are available for this component. Learn more about all available [component methods](/getting-started/javascript#methods) and how to use them.
 
 #### `change`
 
@@ -223,41 +223,11 @@ Changes the current theme to the set `mode`.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| `mode` | string | Your preferred mode (e.g., `light`, `dark` or `auto`). |
+| `mode` | `string` | Your preferred mode (e.g., `light`, `dark` or `auto`). |
 
 ### Accessors 
 
-#### Static Accessors
-
-The following static accessors are available for this component:
-
-##### `componentName`
-
-<small>*Type:* `string` | *Access:* `read-only`</small>
-
-Returns the registered component name.
-
-```js
-import { Theme } from '@anilla/ui';
-
-console.log(Theme.componentName); // 'Theme'
-```
-
-##### `defaults`
-
-<small>*Type:* `object` | *Access:* `read-only`</small>
-
-Returns an `object` of the default component options.
-
-```js
-import { Theme } from '@anilla/ui';
-
-console.log(Theme.defaults); // {...}
-```
-
-#### Instance Accessors
-
-The following instance accessors are available for this component:
+The following instance accessors are available for this component. Learn more about all available [component accessors](/getting-started/javascript#accessors) and how to use them.
 
 ##### `theme`
 
@@ -287,7 +257,7 @@ You can listen for events using either an internal or external approach. The int
 
 ##### `change`
 
-<small>*Parameters:* `{ instance }`</small>
+<small>*Parameters:* `{ instance: Theme }`</small>
 
 Fired when the theme changes.
 

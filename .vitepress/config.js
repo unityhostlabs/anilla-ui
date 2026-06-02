@@ -58,6 +58,13 @@ export default defineConfig({
         ]
     },
 
+    markdown: {
+        theme: {
+            light: 'one-light',
+            dark: 'one-dark-pro'
+        }
+    },
+
     // This removes .html from URLs
     cleanUrls: true,
 

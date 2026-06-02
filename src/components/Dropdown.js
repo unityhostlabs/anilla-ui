@@ -40,6 +40,12 @@ import {
  * @property {Placements[keyof Placements]} [placement='bottom-start'] The placement of the dropdown relative to the reference element (e.g., 'top', 'bottom', 'left', 'right', 'top-start', etc.).
  * @property {FloatingUI} [floatingUI] - The official Floating UI DOM module instance.
  * @property {string} [hiddenClass] The CSS class name for the hidden state.
+ * @property {function(DropdownEvents['show']): void} [onShow] Called when the dropdown show method is called.
+ * @property {function(DropdownEvents['shown']): void} [onShown] Called when the dropdown is shown.
+ * @property {function(DropdownEvents['hide']): void} [onHide] Called when the dropdown hide method is called.
+ * @property {function(DropdownEvents['hidden']): void} [onHidden] Called when the dropdown is hidden.
+ * @property {function(DropdownEvents['toggle']): void} [onToggle] Called when the dropdown is toggled.
+ * @property {function(DropdownEvents['destroy']): void} [onDestroy] Called when the dropdown instance is destroyed.
  */
 
 /** @type {DropdownOptions} */
@@ -50,7 +56,13 @@ const defaults = {
     offsetSkidding: 0,
     placement: 'bottom-start',
     floatingUI: undefined,
-    hiddenClass: 'hidden'
+    hiddenClass: 'hidden',
+    onShow: undefined,
+    onShown: undefined,
+    onHide: undefined,
+    onHidden: undefined,
+    onToggle: undefined,
+    onDestroy: undefined
 };
 
 /**
@@ -188,6 +200,15 @@ export class Dropdown extends BaseComponent {
     }
 
     #setPosition() {
+        // Always kill any existing autoUpdate loop before configuring a new one
+        if (typeof this.#cleanupPositioner === 'function') {
+            this.#cleanupPositioner();
+            this.#cleanupPositioner = null; 
+        }
+
+        // Clear out any previous positioning artifacts so the element calculates cleanly
+        setStyles(this.#dropdown, { top: null, left: null });
+
         if (!this.#hasFloatingUI()) {
             setStyles(this.#dropdown, {
                 top: `${this.el.offsetHeight + this.options.offsetDistance}px`,
@@ -218,7 +239,6 @@ export class Dropdown extends BaseComponent {
             });
         };
         
-        // Listen dynamically to window resizing/scrolling
         if (typeof autoUpdate === 'function') {
             this.#cleanupPositioner = autoUpdate(this.el, this.#dropdown, updatePosition);
         } else {
@@ -231,13 +251,23 @@ export class Dropdown extends BaseComponent {
      * @param {Parameters<BaseComponent["_onOptionsUpdate"]>[1] & DropdownOptions} previous
      */
     _onOptionsUpdate(changed, previous) {
-        
+        const hasFloatingUIOptions = ['placement', 'offsetDistance', 'offsetSkidding'].some(key => Object.hasOwn(changed, key));
+
+        if (hasFloatingUIOptions && this.#isVisible) {
+            // Halt ongoing active frame transitions before resetting positions
+            if (this.transition.exists && this.transition.isBusy) {
+                this.transition.cancel();
+            }
+
+            this.#setPosition();
+        }
     }
 
     // --- Public API
 
     show() {
         if (this.transition.isBusy) return;
+
         this.emit('show');
         this.#setPosition();
         removeClasses(this.#dropdown, this.options.hiddenClass);
@@ -251,6 +281,7 @@ export class Dropdown extends BaseComponent {
 
     hide() {
         if (this.transition.isBusy) return;
+
         this.emit('hide');
 
         const hideDropdown = () => {

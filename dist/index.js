@@ -1283,13 +1283,6 @@ var BaseComponent = class {
 	#el;
 	/** @type {O & EventCallbacks<T, any>} */
 	#options;
-	/**
-	* Merged defaults from Transition and the component subclass.
-	* Computed once at construction and reused by setOptions().
-	* 
-	* @type {O & EventCallbacks<T, any>}
-	*/
-	#allDefaults;
 	/** @type {EventBus} */
 	#bus = new EventBus();
 	/** @type {DOMEventStore} */
@@ -1345,6 +1338,14 @@ var BaseComponent = class {
 	get options() {
 		return this.#options;
 	}
+	/** 
+	* Set the component's options.
+	* 
+	* @param {OptionsPayload} newOptions
+	*/
+	set options(newOptions) {
+		this.setOptions(newOptions);
+	}
 	/**
 	* The Transition instance for this component.
 	* Use transition.enter(el) / transition.leave(el) to run CSS transitions.
@@ -1384,10 +1385,9 @@ var BaseComponent = class {
 			logger.warn(`${this.name}: setOptions() called after destroy() — ignored.`);
 			return this.#options;
 		}
-		const allDefaults = this.#allDefaults;
 		const valid = {};
 		const invalid = [];
-		for (const [key, value] of Object.entries(newOptions)) if (key in allDefaults) valid[key] = value;
+		for (const [key, value] of Object.entries(newOptions)) if (key in this.#options) valid[key] = value;
 		else invalid.push(key);
 		if (invalid.length) logger.warn(`${this.name}: setOptions() received unknown keys: ${invalid.join(", ")} — ignored.`);
 		if (Object.keys(valid).length === 0) return this.#options;
@@ -1728,6 +1728,12 @@ var DataStorage = class {
 * @property {Placements[keyof Placements]} [placement='bottom-start'] The placement of the dropdown relative to the reference element (e.g., 'top', 'bottom', 'left', 'right', 'top-start', etc.).
 * @property {FloatingUI} [floatingUI] - The official Floating UI DOM module instance.
 * @property {string} [hiddenClass] The CSS class name for the hidden state.
+* @property {function(DropdownEvents['show']): void} [onShow] Called when the dropdown show method is called.
+* @property {function(DropdownEvents['shown']): void} [onShown] Called when the dropdown is shown.
+* @property {function(DropdownEvents['hide']): void} [onHide] Called when the dropdown hide method is called.
+* @property {function(DropdownEvents['hidden']): void} [onHidden] Called when the dropdown is hidden.
+* @property {function(DropdownEvents['toggle']): void} [onToggle] Called when the dropdown is toggled.
+* @property {function(DropdownEvents['destroy']): void} [onDestroy] Called when the dropdown instance is destroyed.
 */
 /** @type {DropdownOptions} */
 const defaults$1 = {
@@ -1737,7 +1743,13 @@ const defaults$1 = {
 	offsetSkidding: 0,
 	placement: "bottom-start",
 	floatingUI: void 0,
-	hiddenClass: "hidden"
+	hiddenClass: "hidden",
+	onShow: void 0,
+	onShown: void 0,
+	onHide: void 0,
+	onHidden: void 0,
+	onToggle: void 0,
+	onDestroy: void 0
 };
 /**
 * @extends {BaseComponent<DropdownEvents, typeof defaults>}
@@ -1822,6 +1834,14 @@ var Dropdown = class extends BaseComponent {
 		return hasComputePosition;
 	}
 	#setPosition() {
+		if (typeof this.#cleanupPositioner === "function") {
+			this.#cleanupPositioner();
+			this.#cleanupPositioner = null;
+		}
+		setStyles(this.#dropdown, {
+			top: null,
+			left: null
+		});
 		if (!this.#hasFloatingUI()) {
 			setStyles(this.#dropdown, {
 				top: `${this.el.offsetHeight + this.options.offsetDistance}px`,
@@ -1855,7 +1875,16 @@ var Dropdown = class extends BaseComponent {
 	* @param {Parameters<BaseComponent["_onOptionsUpdate"]>[0] & DropdownOptions} changed
 	* @param {Parameters<BaseComponent["_onOptionsUpdate"]>[1] & DropdownOptions} previous
 	*/
-	_onOptionsUpdate(changed, previous) {}
+	_onOptionsUpdate(changed, previous) {
+		if ([
+			"placement",
+			"offsetDistance",
+			"offsetSkidding"
+		].some((key) => Object.hasOwn(changed, key)) && this.#isVisible) {
+			if (this.transition.exists && this.transition.isBusy) this.transition.cancel();
+			this.#setPosition();
+		}
+	}
 	show() {
 		if (this.transition.isBusy) return;
 		this.emit("show");
@@ -1914,8 +1943,8 @@ var Dropdown = class extends BaseComponent {
 */
 /**
 * @typedef {Object} ThemeEvents
-* @property {{instance: Theme}} change Fired when the theme changes.
-* @property {{instance: Theme}} destroy Fired when the theme instance is destroyed.
+* @property {{instance: Theme}} change Emitted when the theme changes.
+* @property {{instance: Theme}} destroy Emitted when the theme instance is destroyed.
 */
 /**
 * @typedef {Object} ThemeOptions
@@ -1929,6 +1958,8 @@ var Dropdown = class extends BaseComponent {
 * @property {string} [storageKey] The key used to store the theme mode in localStorage.
 * @property {'local' | 'session'} [storageType] The type of storage to use for persisting the theme mode.
 * @property {string} [className] The CSS class name for the dark theme.
+* @property {function(ThemeEvents['change']): void} [onChange] Called when the theme changes.
+* @property {function(ThemeEvents['destroy']): void} [onDestroy] Called when the theme instance is destroyed.
 */
 /** @type {ThemeOptions} */
 const defaults = {
@@ -1941,7 +1972,9 @@ const defaults = {
 	enableStorage: true,
 	storageKey: "theme",
 	storageType: "local",
-	className: "dark"
+	className: "dark",
+	onChange: void 0,
+	onDestroy: void 0
 };
 /**
 * @extends {BaseComponent<ThemeEvents, typeof defaults>}
