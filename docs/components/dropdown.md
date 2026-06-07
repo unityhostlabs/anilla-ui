@@ -29,7 +29,7 @@ Note that your dropdown element must be initially hidden using the utility class
 
 ## Auto Close Behavior
 
-By default, a dropdown closes when you click inside or outside it. To change how dropdowns close, set the `autoClose` value to any of the `autoClose` option values under the [component options](#component-options) section. Note: Clicking the trigger element will always close the dropdown ignoring this option.
+By default, a dropdown closes when you click inside or outside it. To change how dropdowns close, set the `autoClose` value to any of the `autoClose` values under the [component options](#component-options) section. Note: Clicking the trigger element will always close the dropdown ignoring this option.
 
 ## Extended Features
 
