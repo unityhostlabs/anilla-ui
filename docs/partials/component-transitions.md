@@ -1,0 +1,6 @@
+| `transitionEnter` | `string`, `null` | The utility classes applied during the entire transition/animation entry phase. |
+| `transitionEnterFrom` | `string`, `null` | The utility classes applied immediately after `transitionEnter` and removed after one frame. |
+| `transitionEnterTo` | `string`, `null` | The utility classes applied after `transitionEnterFrom` classes are removed within the same frame. The `transitionEnterTo` and `transitionEnter` classes are also removed after the transition/animation has completed the entry phase. |
+| `transitionLeave` | `string`, `null` | The utility classes applied during the entire transition/animation exit phase. |
+| `transitionLeaveFrom` | `string`, `null` | The utility classes applied immediately after `transitionLeave` and removed after one frame. |
+| `transitionLeaveTo` | `string`, `null` | The utility classes applied after `transitionLeaveFrom` classes are removed within the same frame. The `transitionLeaveTo` and `transitionLeave` classes are also removed after the transition/animation has completed the exit phase. |

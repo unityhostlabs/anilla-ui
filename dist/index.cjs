@@ -1791,6 +1791,8 @@ var Dropdown = class extends BaseComponent {
 		if (!this.#getTargetElement()) throw new Error(`Target element or dropdown not found.`);
 		this.#dropdown = this.#getTargetElement();
 		if (this.options.floatingUI) this.#floatingUI = this.options.floatingUI;
+		this.options.offsetDistance = parseInt(String(this.options.offsetDistance), 10) || defaults$1.offsetDistance;
+		this.options.offsetSkidding = parseInt(String(this.options.offsetSkidding), 10) || defaults$1.offsetSkidding;
 		setAttributes(this.el, {
 			ariaHaspopup: "true",
 			ariaExpanded: "false"

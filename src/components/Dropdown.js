@@ -110,6 +110,8 @@ export class Dropdown extends BaseComponent {
 
         this.#dropdown = this.#getTargetElement();
         if (this.options.floatingUI) this.#floatingUI = this.options.floatingUI;
+        this.options.offsetDistance = parseInt(String(this.options.offsetDistance), 10) || defaults.offsetDistance;
+        this.options.offsetSkidding = parseInt(String(this.options.offsetSkidding), 10) || defaults.offsetSkidding;
 
         setAttributes(this.el, {
             ariaHaspopup: 'true',

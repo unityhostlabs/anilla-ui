@@ -27,6 +27,10 @@ Note that your dropdown element must be initially hidden using the utility class
 
 <DemoBox src="/demos/dropdown/basic-usage.html" height="300px" id="dropdown-basic-usage" />
 
+## Auto Close Behavior
+
+By default, a dropdown closes when you click inside or outside it. To change how dropdowns close, set the `autoClose` value to any of the `autoClose` option values under the [component options](#component-options) section. Note: Clicking the trigger element will always close the dropdown ignoring this option.
+
 ## Extended Features
 
 You can also install and import the [Floating UI](https://floating-ui.com/){target="_blank"} (the successor to Popper) library to enable advanced features such as placement, auto-positioning, flipping, offset distance, offset skidding, and more.
@@ -84,3 +88,23 @@ The `offsetSkidding` option controls the horizontal position of the dropdown fro
     </div>
 </div>
 ```
+
+### Auto Positioning
+
+Auto positioning is enabled out of the box once you import the [Floating UI](https://floating-ui.com/){target="_blank"} library. The example below shows the dropdown auto position when you scroll down.
+
+<DemoBox src="/demos/dropdown/auto-positioning.html" height="260px" id="dropdown-auto-positioning" />
+
+## Component Options
+
+<!--@include: @/partials/options-intro.md-->
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `autoClose` | `boolean`, `string` | <ul class="my-2"><li>`true` - the dropdown will be closed by clicking outside or inside the dropdown menu.</li><li>`false` - the dropdown will be closed by clicking the trigger button and manually calling `hide` or `toggle` method.</li><li>`'inside'` - the dropdown will be closed **only** by clicking inside the dropdown menu.</li> <li>`'outside'` - the dropdown will be closed **only** by clicking outside the dropdown menu.</li></ul> The <kbd>Esc</kbd> key will close all dropdowns with the above options except `false`. |
+| `placement` | `string` | You can adjust the position of the dropdown to any of the following values: `top`, `top-start`, `top-end`, `right`, `right-start`, `right-end`, `bottom`, `bottom-start`, `bottom-end`, `left`, `left-start` and `left-end`. The default position is `bottom-start`. |
+| `offsetDistance` | `number` | The vertical distance between the trigger element and the dropdown in pixels. The `px` suffix is not required. |
+| `offsetSkidding` | `number` | The horizontal distance between the trigger element and the dropdown in pixels. The `px` suffix is not required. |
+| `target` | `string` | A selector pointing to the dropdown element if it is not the immediate sibling of the trigger element. |
+| `hiddenClass` | `string` | The utility class for hiding the dropdown element. The default value is `hidden`. |
+<!--@include: @/partials/component-transitions.md-->
