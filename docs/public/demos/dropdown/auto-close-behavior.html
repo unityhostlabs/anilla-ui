@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../demos.css">
+    <script type="module" src="../../theme.js"></script>
+    <script type="module">
+        import { Dropdown } from '../../src/components/Dropdown.js';
+        import * as FloatingUI from 'https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.7.5/+esm';
+
+        Dropdown.initAll('[data-dropdown-auto-close]');
+    </script>
+</head>
+<body class="h-full">
+    <div class="flex flex-col justify-start p-4 h-full">
+        <div class="flex items-center justify-center gap-2 w-full max-w-lg mx-auto">
+            <div class="relative">
+                <button type="button" class="btn btn-default" data-dropdown-auto-close="true">True</button>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
+                    <ul class="p-2 text-sm text-body font-medium">
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">View Details</button>
+                        </li>
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</button>
+                        </li>
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Terminate</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="relative">
+                <button type="button" class="btn btn-default" data-dropdown-auto-close="inside">Inside</button>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
+                    <ul class="p-2 text-sm text-body font-medium">
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">View Details</button>
+                        </li>
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</button>
+                        </li>
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Terminate</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="relative">
+                <button type="button" class="btn btn-default" data-dropdown-auto-close="outside">Outside</button>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
+                    <ul class="p-2 text-sm text-body font-medium">
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">View Details</button>
+                        </li>
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</button>
+                        </li>
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Terminate</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="relative">
+                <button type="button" class="btn btn-default" data-dropdown-auto-close="false">False</button>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
+                    <ul class="p-2 text-sm text-body font-medium">
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">View Details</button>
+                        </li>
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</button>
+                        </li>
+                        <li>
+                            <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Terminate</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

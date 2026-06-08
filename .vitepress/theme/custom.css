@@ -27,6 +27,19 @@
     /* background-color: var(--vp-c-bg-soft); */
 }
 
+/* 1. Limit the outermost wrapper height */
+.vp-doc div[class*="language-"] {
+  max-height: 350px !important; /* Cap the max height here */
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* 2. Enable scrolling on the inner container */
+.vp-doc div[class*="language-"] pre {
+  max-height: 100% !important;
+  overflow-y: auto !important; /* Adds the vertical scrollbar */
+  margin: 0 !important;
+}
 
 @media (min-width: 960px) {
     .vp-doc table {

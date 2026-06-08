@@ -147,6 +147,7 @@ To fix the light theme flash before `dark` mode loads, you must apply the theme 
 | `attributeName` | `string` | The data attribute name to store the current theme mode. |
 | `modeAttributeName` | `string` | The data attribute name to store the current theme mode on the trigger element. |
 | `label` | `string` | The label template for the trigger element, where `:mode` will be replaced with the current mode. This sets `aria-label` attribute on supported elements with the label text as its value. `<select>` inputs are excluded and must be set manually. |
+| `includeMetaTag` | `boolean` | Whether to include a `<meta>` tag for `color-scheme` in the document head. |
 | `showTitle` | `boolean` | Sets a `title` attribute with the label text as its value. `<select>` inputs are excluded. |
 | `enableStorage` | `boolean` | Whether to enable `localStorage` to persist the theme mode across sessions. |
 | `storageKey` | `string` | The key used to store the theme mode in `localStorage`. |

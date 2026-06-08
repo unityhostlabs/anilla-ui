@@ -27,6 +27,7 @@ import {
  * @property {ThemeMode | string} [autoModeName] The name of the auto mode.
  * @property {string} [attributeName] The data attribute name to store the current theme mode.
  * @property {string} [modeAttributeName] The data attribute name to store the current theme mode on the trigger element.
+ * @property {boolean} [includeMetaTag] Whether to include a meta tag for color-scheme in the document head.
  * @property {string} [label] The label template for the trigger element, where :mode will be replaced with the current mode.
  * @property {boolean} [showTitle] Whether to show the title attribute on the trigger element.
  * @property {boolean} [enableStorage] Whether to enable localStorage to persist the theme mode.
@@ -44,6 +45,7 @@ const defaults = {
     attributeName: 'data-theme',
     modeAttributeName: 'data-mode',
     label: 'Switch to :mode theme',
+    includeMetaTag: true,
     showTitle: false,
     enableStorage: true,
     storageKey: 'theme',
@@ -166,13 +168,6 @@ export class Theme extends BaseComponent {
 
         // Set initial theme based on stored value or system preference
         this.#shouldAddDarkClass(this.#getTheme());
-        // const isDarkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        // const shouldAddDarkClass = (this.#getTheme() === this.#modes.auto && isDarkPreferred) || this.#getTheme() === this.#modes.dark;
-        // this.el.classList.toggle(this.options.className, shouldAddDarkClass);
-
-        // if ((this.#getTheme() === this.#modes.auto && isDarkPreferred) || this.#getTheme() === this.#modes.dark) {
-        //     addClasses(this.el, this.options.className);
-        // }
 
         // Update trigger state on initialization
         this.#updateTriggerState(this.#getTheme());
@@ -217,6 +212,24 @@ export class Theme extends BaseComponent {
 
         // Return valid mode or default to auto
         return objectHasValue(this.#modes, mode) ? mode : this.#modes.auto;
+    }
+
+    #setColorSchemeMetaTag() {
+        if (!this.options.includeMetaTag) return;
+
+        let metaTag = /** @type {HTMLMetaElement | null} */ (document.head.querySelector('meta[name="color-scheme"]'));
+
+        if (!metaTag) {
+            metaTag = document.createElement('meta');
+            metaTag.name = 'color-scheme';
+            document.head.appendChild(metaTag);
+        }
+
+        metaTag.content = {
+            [this.#modes.light]: 'light',
+            [this.#modes.dark]: 'dark',
+            [this.#modes.auto]: 'light dark'
+        }[this.#getTheme()];
     }
 
     /** 
@@ -321,6 +334,9 @@ export class Theme extends BaseComponent {
                 this.#storage.set(this.options.storageKey, mode);
             }
         }
+
+        // Update meta tag for color scheme
+        this.#setColorSchemeMetaTag();
 
         // Update DOM classes
         this.#shouldAddDarkClass(mode);

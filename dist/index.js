@@ -1960,6 +1960,7 @@ var Dropdown = class extends BaseComponent {
 * @property {ThemeMode | string} [autoModeName] The name of the auto mode.
 * @property {string} [attributeName] The data attribute name to store the current theme mode.
 * @property {string} [modeAttributeName] The data attribute name to store the current theme mode on the trigger element.
+* @property {boolean} [includeMetaTag] Whether to include a meta tag for color-scheme in the document head.
 * @property {string} [label] The label template for the trigger element, where :mode will be replaced with the current mode.
 * @property {boolean} [showTitle] Whether to show the title attribute on the trigger element.
 * @property {boolean} [enableStorage] Whether to enable localStorage to persist the theme mode.
@@ -1976,6 +1977,7 @@ const defaults = {
 	attributeName: "data-theme",
 	modeAttributeName: "data-mode",
 	label: "Switch to :mode theme",
+	includeMetaTag: true,
 	showTitle: false,
 	enableStorage: true,
 	storageKey: "theme",
@@ -2086,6 +2088,20 @@ var Theme = class extends BaseComponent {
 		const mode = !isEmpty(val) ? val : getAttribute(el, this.options.modeAttributeName);
 		return objectHasValue(this.#modes, mode) ? mode : this.#modes.auto;
 	}
+	#setColorSchemeMetaTag() {
+		if (!this.options.includeMetaTag) return;
+		let metaTag = document.head.querySelector("meta[name=\"color-scheme\"]");
+		if (!metaTag) {
+			metaTag = document.createElement("meta");
+			metaTag.name = "color-scheme";
+			document.head.appendChild(metaTag);
+		}
+		metaTag.content = {
+			[this.#modes.light]: "light",
+			[this.#modes.dark]: "dark",
+			[this.#modes.auto]: "light dark"
+		}[this.#getTheme()];
+	}
 	/** 
 	* @param {HTMLElement} el 
 	* @returns {boolean}
@@ -2152,6 +2168,7 @@ var Theme = class extends BaseComponent {
 		if (!(mode in this.#modes)) mode = this.#modes.auto;
 		if (this.options.enableStorage) if (mode === this.#modes.auto) this.#storage.remove(this.options.storageKey);
 		else this.#storage.set(this.options.storageKey, mode);
+		this.#setColorSchemeMetaTag();
 		this.#shouldAddDarkClass(mode);
 		this.#theme = mode;
 		setAttributes(this.el, { [this.options.attributeName]: mode });

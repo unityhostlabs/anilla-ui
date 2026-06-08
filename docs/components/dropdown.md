@@ -31,6 +31,75 @@ Note that your dropdown element must be initially hidden using the utility class
 
 By default, a dropdown closes when you click inside or outside it. To change how dropdowns close, set the `autoClose` value to any of the `autoClose` values under the [component options](#component-options) section. Note: Clicking the trigger element will always close the dropdown ignoring this option.
 
+<DemoBox src="/demos/dropdown/auto-close-behavior.html" height="300px" id="dropdown-auto-close-behavior" />
+
+```html
+<div class="relative">
+    <button type="button" class="btn btn-default" data-dropdown-auto-close="true">True</button>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
+        <ul class="p-2 text-sm text-body font-medium">
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">View Details</button>
+            </li>
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</button>
+            </li>
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Terminate</button>
+            </li>
+        </ul>
+    </div>
+</div>
+<div class="relative">
+    <button type="button" class="btn btn-default" data-dropdown-auto-close="inside">Inside</button>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
+        <ul class="p-2 text-sm text-body font-medium">
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">View Details</button>
+            </li>
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</button>
+            </li>
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Terminate</button>
+            </li>
+        </ul>
+    </div>
+</div>
+<div class="relative">
+    <button type="button" class="btn btn-default" data-dropdown-auto-close="outside">Outside</button>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
+        <ul class="p-2 text-sm text-body font-medium">
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">View Details</button>
+            </li>
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</button>
+            </li>
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Terminate</button>
+            </li>
+        </ul>
+    </div>
+</div>
+<div class="relative">
+    <button type="button" class="btn btn-default" data-dropdown-auto-close="false">False</button>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
+        <ul class="p-2 text-sm text-body font-medium">
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">View Details</button>
+            </li>
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</button>
+            </li>
+            <li>
+                <button type="button" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Terminate</button>
+            </li>
+        </ul>
+    </div>
+</div>
+```
+
 ## Extended Features
 
 You can also install and import the [Floating UI](https://floating-ui.com/){target="_blank"} (the successor to Popper) library to enable advanced features such as placement, auto-positioning, flipping, offset distance, offset skidding, and more.
