@@ -27,19 +27,29 @@
     /* background-color: var(--vp-c-bg-soft); */
 }
 
-/* 1. Limit the outermost wrapper height */
-.vp-doc div[class*="language-"] {
-  max-height: 350px !important; /* Cap the max height here */
+/* 1. Only expand standard standalone code blocks OR the ACTIVE tab in a code group */
+.vp-doc div[class*="language-"]:not(.vp-code-group div[class*="language-"]),
+.vp-doc .vp-code-group div[class*="language-"].active {
+  max-height: 400px !important;
   display: flex !important;
   flex-direction: column !important;
 }
 
-/* 2. Enable scrolling on the inner container */
-.vp-doc div[class*="language-"] pre {
+/* 2. Enable scrolling safely for standard and active tab containers */
+.vp-doc div[class*="language-"]:not(.vp-code-group div[class*="language-"]) pre,
+.vp-doc .vp-code-group div[class*="language-"].active pre {
   max-height: 100% !important;
-  overflow-y: auto !important; /* Adds the vertical scrollbar */
+  overflow-y: auto !important;
   margin: 0 !important;
 }
+
+/* 3. Ensure underlying code tags stretch safely */
+.vp-doc div[class*="language-"]:not(.vp-code-group div[class*="language-"]) code,
+.vp-doc .vp-code-group div[class*="language-"].active code {
+  flex: 1 !important;
+  display: block !important;
+}
+
 
 @media (min-width: 960px) {
     .vp-doc table {

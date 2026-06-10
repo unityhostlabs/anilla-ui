@@ -9,7 +9,7 @@
         import { Dropdown } from '../../src/components/Dropdown.js';
         import * as FloatingUI from 'https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.7.5/+esm';
 
-        const dropdown = new Dropdown('#offset-skidding', {
+        const dropdown = new Dropdown('#auto-positioning', {
             floatingUI: FloatingUI
         });
     </script>
@@ -18,7 +18,7 @@
     <div class="flex flex-col justify-center pt-48 pb-4 px-4">
         <div class="flex items-center justify-center gap-6 w-full max-w-lg mx-auto">
             <div class="relative">
-                <button type="button" class="btn btn-default" id="offset-skidding">Dropdown</button>
+                <button type="button" class="btn btn-default" id="auto-positioning">Dropdown</button>
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
                     <ul class="p-2 text-sm text-body font-medium" aria-labelledby="dropdownDefaultButton">
                         <li>

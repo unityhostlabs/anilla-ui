@@ -25,13 +25,14 @@ Note that your dropdown element must be initially hidden using the utility class
 </div>
 ```
 
-<DemoBox src="/demos/dropdown/basic-usage.html" height="300px" id="dropdown-basic-usage" />
+<DemoBox src="/demos/dropdown/basic-usage.html" height="300px" id="dropdown-basic-usage">
+</DemoBox>
 
 ## Auto Close Behavior
 
 By default, a dropdown closes when you click inside or outside it. To change how dropdowns close, set the `autoClose` value to any of the `autoClose` values under the [component options](#component-options) section. Note: Clicking the trigger element will always close the dropdown ignoring this option.
 
-<DemoBox src="/demos/dropdown/auto-close-behavior.html" height="300px" id="dropdown-auto-close-behavior" />
+<DemoBox src="/demos/dropdown/auto-close-behavior.html" height="300px" id="dropdown-auto-close-behavior">
 
 ```html
 <div class="relative">
@@ -100,6 +101,8 @@ By default, a dropdown closes when you click inside or outside it. To change how
 </div>
 ```
 
+</DemoBox>
+
 ## Extended Features
 
 You can also install and import the [Floating UI](https://floating-ui.com/){target="_blank"} (the successor to Popper) library to enable advanced features such as placement, auto-positioning, flipping, offset distance, offset skidding, and more.
@@ -108,7 +111,7 @@ You can also install and import the [Floating UI](https://floating-ui.com/){targ
 import { Dropdown } from '@anilla/ui';
 import * as FloatingUI from 'https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.7.5/+esm';
 
-const dropdown = new Dropdown(element, {
+const dropdown = new Dropdown('[data-ui-dropdown=true]', {
     floatingUI: FloatingUI
 });
 ```
@@ -117,7 +120,7 @@ const dropdown = new Dropdown(element, {
 
 The dropdown is placed at the `bottom-start` position by default. You can change this behavior by setting the `placement` value to any of the acceptable values under the [component options](#component-options) section.
 
-<DemoBox src="/demos/dropdown/placement.html" height="230px" id="dropdown-placement" />
+<DemoBox src="/demos/dropdown/placement.html" height="230px" id="dropdown-placement">
 
 ```html
 <div class="relative">
@@ -128,11 +131,13 @@ The dropdown is placed at the `bottom-start` position by default. You can change
 </div>
 ```
 
+</DemoBox>
+
 ### Offset Distance
 
 The `offsetDistance` option controls the vertical position of the dropdown from the reference element. In the example below, the `offsetDistance` is changed from the default value of `8` to `0`.
 
-<DemoBox src="/demos/dropdown/offset-distance.html" height="260px" id="dropdown-offset-distance" />
+<DemoBox src="/demos/dropdown/offset-distance.html" height="260px" id="dropdown-offset-distance">
 
 ```html
 <div class="relative">
@@ -143,20 +148,37 @@ The `offsetDistance` option controls the vertical position of the dropdown from 
 </div>
 ```
 
+</DemoBox>
+
 ### Offset Skidding
 
 The `offsetSkidding` option controls the horizontal position of the dropdown from the reference element. In the example below, the `offsetSkidding` is changed from the default value of `0` to `-100`.
 
-<DemoBox src="/demos/dropdown/offset-skidding.html" height="260px" id="dropdown-offset-skidding" />
+<DemoBox src="/demos/dropdown/offset-skidding.html" height="260px" id="dropdown-offset-skidding">
 
 ```html
 <div class="relative">
-    <button type="button" data-ui-dropdown="true" data-dropdown-offset-skidding="-100">Dropdown</button>
-    <div class="absolute z-10 hidden">
-        <!-- your dropdown content -->
+    <button type="button" class="btn btn-default" data-ui-dropdown="true" data-dropdown-offset-skidding="-100">Dropdown</button>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg ring ring-gray-200 dark:ring-white/10 w-40 absolute z-10 hidden">
+        <ul class="p-2 text-sm text-body font-medium" aria-labelledby="dropdownDefaultButton">
+            <li>
+                <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">View Details</a>
+            </li>
+            <li>
+                <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Settings</a>
+            </li>
+            <li>
+                <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Activities</a>
+            </li>
+            <li>
+                <a href="#" class="inline-flex items-center w-full p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/5">Terminate</a>
+            </li>
+        </ul>
     </div>
 </div>
 ```
+
+</DemoBox>
 
 ### Auto Positioning
 

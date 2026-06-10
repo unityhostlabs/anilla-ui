@@ -2,18 +2,6 @@
     <div class="demo-box">
         <div class="demo-toolbar">
             <button 
-                v-if="$slots.default"
-                class="toolbar-btn source-btn"
-                :class="{ active: showSource }"
-                :title="showSource ? 'Hide Source' : 'View Source'"
-                @click="showSource = !showSource">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="btn-icon">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
-                </svg>
-                <span>{{ showSource ? 'Hide Source' : 'View Source' }}</span>
-            </button>
-
-            <button 
                 class="toolbar-btn reload-btn" 
                 title="Reload Preview"
                 @click="reloadIframe">
@@ -30,8 +18,8 @@
                 {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
             </button>
         </div>
-
         <div ref="containerRef" class="resizable-container">
+    
             <div v-if="isLoading" class="demo-spinner-overlay">
                 <div class="demo-spinner"></div>
             </div>
@@ -42,10 +30,6 @@
                 opacity: isLoading ? 0 : 1
             }" loading="lazy" @load="onIframeLoad"></iframe>
             <div class="resize-handle" @mousedown="startResize"></div>
-        </div>
-
-        <div v-if="$slots.default" v-show="showSource" class="demo-source-code">
-            <slot />
         </div>
     </div>
 </template>
@@ -61,9 +45,8 @@ const props = defineProps({
 })
 
 const isLoading = ref(true)
-const showSource = ref(false) // State to toggle source visibility
 const calculatedHeight = ref(props.height)
-const isDarkMode = ref(sessionStorage.getItem(props.id) === 'dark')
+const isDarkMode = ref(sessionStorage.getItem(props.id) === 'dark') // Simplified fallback behavior
 
 const containerRef = ref(null)
 const iframeRef = ref(null)
@@ -77,21 +60,27 @@ const onIframeLoad = () => {
     sendTheme()
 }
 
+// Forces the iframe to reload and triggers the loading overlay
 const reloadIframe = () => {
     if (!iframeRef.value) return
     isLoading.value = true
+    
+    // Appending a timestamp or re-assigning src forces a hard reload
     const currentSrc = iframeRef.value.src
     iframeRef.value.src = currentSrc
 }
 
+// Switches the boolean state and updates the iframe
 const toggleTheme = () => {
     isDarkMode.value = !isDarkMode.value
+    // Save state to sessionStorage for persistence
     if (props.id) {
         sessionStorage.setItem(props.id, isDarkMode.value ? 'dark' : 'light')
     }
     sendTheme()
 }
 
+// Sends 'dark' or 'light' string based on the boolean state
 const sendTheme = () => {
     const currentMode = isDarkMode.value ? 'dark' : 'light'
     iframeRef.value?.contentWindow?.postMessage({ uiTheme: currentMode, id: props.id }, '*')
@@ -147,7 +136,6 @@ onUnmounted(() => {
 .demo-box {
     display: flex;
     flex-direction: column;
-    margin-bottom: 24px;
 }
 
 .demo-toolbar {
@@ -158,6 +146,7 @@ onUnmounted(() => {
     align-items: center;
 }
 
+/* Shared toolbar button styles */
 .toolbar-btn {
     padding: 2px 10px;
     border-radius: 4px;
@@ -169,9 +158,7 @@ onUnmounted(() => {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
     transition: background-color 0.15s, color 0.15s;
-    height: 28px; /* Fixed height makes alignment perfectly identical */
 }
 
 .toolbar-btn:hover {
@@ -183,14 +170,10 @@ onUnmounted(() => {
     padding: 4px 8px;
 }
 
-.source-btn.active, .theme-btn.active {
+.theme-btn.active {
     background: var(--vp-c-brand-1, #3eaf7c);
     border-color: var(--vp-c-brand-1, #3eaf7c);
     color: #fff;
-}
-
-.btn-icon {
-    flex-shrink: 0;
 }
 
 iframe {
@@ -228,7 +211,9 @@ iframe {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .resize-handle {
@@ -255,17 +240,5 @@ iframe {
 .resize-handle:hover::before,
 .resize-handle:active::before {
     background-color: var(--vp-c-brand-1, #3eaf7c);
-}
-
-/* Source Code Container Styles */
-.demo-source-code {
-    margin-top: 12px;
-    animation: fadeIn 0.2s ease-in-out;
-}
-
-/* Optional soft animation for source box reveal */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 </style>

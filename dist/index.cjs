@@ -596,7 +596,7 @@ function hasComputedStyle(element, property, value) {
 *   data-dropdown-active-class="open"
 *   data-dropdown-close-on-outside-click="false"
 *
-* ── Multiple components on one element ──────────────────────────────────────
+* --- Multiple components on one element
 * Add multiple enable attributes — each component is independent:
 *
 *   <div data-ui-modal="true"
@@ -605,7 +605,7 @@ function hasComputedStyle(element, property, value) {
 *        data-dropdown-active-class="open">
 *   </div>
 *
-* ── Re-scanning ──────────────────────────────────────────────────────────────
+* --- Re-scanning
 * AutoInit.init() is idempotent. Already-initialized elements (detected via
 * the Registry) are skipped — safe to call after dynamic DOM insertions.
 */

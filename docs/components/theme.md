@@ -29,7 +29,7 @@ To initialize the Theme component on a parent element through the use of data at
 
 When using radio inputs as triggers, the component uses the `value` attributes to determine your preferred theme mode.
 
-<DemoBox src="/demos/theme/selection-radio-input.html" :show-theme="false"/>
+<DemoBox src="/demos/theme/selection-radio-input.html" :show-theme="false">
 
 ```html
 <label>
@@ -46,11 +46,13 @@ When using radio inputs as triggers, the component uses the `value` attributes t
 </label>
 ```
 
+</DemoBox>
+
 #### Select Input
 
 The `value` attribute of the `<option>` tag of a single `<select>` input, is used by the component to determine your preferred theme mode.
 
-<DemoBox src="/demos/theme/selection-select-input.html" :show-theme="false"/>
+<DemoBox src="/demos/theme/selection-select-input.html" :show-theme="false">
 
 ```html
 <select class="theme-trigger" title="Select theme">
@@ -60,11 +62,13 @@ The `value` attribute of the `<option>` tag of a single `<select>` input, is use
 </select>
 ```
 
+</DemoBox>
+
 #### Buttons or Links
 
 Multiple `<button>` and `<a>` tags can be used to setup choice selection triggers. To set the preferred theme mode on these elements, add `data-mode="{light|dark|auto}"` to the trigger element. A `<button>` or `<a>` tag can be styled based on the state of their `aria-pressed="{true|false}"` and `aria-current="{true|false}"` attributes.
 
-<DemoBox src="/demos/theme/selection-buttons-links.html" :show-theme="false"/>
+<DemoBox src="/demos/theme/selection-buttons-links.html" :show-theme="false">
 
 ```html
 <button type="button" class="theme-trigger" data-mode="light">Light</button>
@@ -72,11 +76,13 @@ Multiple `<button>` and `<a>` tags can be used to setup choice selection trigger
 <a href="#" class="theme-trigger" data-mode="auto">Auto</a>
 ```
 
+</DemoBox>
+
 ## Toggle Triggers
 
 Checkboxes have only two states and are therefore considered toggle triggers. Single `<button>` or `<a>` elements that do not have a `data-mode="{light|dark|auto}"` attribute present are considered as toggles. Toggle triggers only have `light` and `dark` modes. The `dark` mode is enabled when `<input type="checkbox">` is `:checked` or a `<button>` or `<a>` is pressed.
 
-<DemoBox src="/demos/theme/toggle-triggers.html" :show-theme="false"/>
+<DemoBox src="/demos/theme/toggle-triggers.html" :show-theme="false">
 
 ```html
 <label>
@@ -86,12 +92,14 @@ Checkboxes have only two states and are therefore considered toggle triggers. Si
 <button type="button" class="theme-trigger">Toggle Mode</button>
 ```
 
+</DemoBox>
+
 ## Storage Type
 The component uses `localStorage` to persist the selected theme across browser sessions. If you prefer the theme preference to reset when the user closes their browser tab or window, you can change the `storageType` option to `session`.
 
 This can be configured via JavaScript options or inline using the `data-storage-type` attribute. The example below stores the theme mode in `sessionStorage`.
 
-<DemoBox src="/demos/theme/session-storage.html" :show-theme="false"/>
+<DemoBox src="/demos/theme/session-storage.html" :show-theme="false">
 
 ```html
 <html lang="en" data-ui-theme="enable" data-theme-trigger=".theme-trigger" data-theme-storage-type="session">
@@ -102,11 +110,13 @@ This can be configured via JavaScript options or inline using the `data-storage-
 </html>
 ```
 
+</DemoBox>
+
 ## Disable Storage
 
 By default, the theme preference persists across sessions because it is saved to `localStorage`. If you want to disable this behavior, you can set the `enableStorage` option to `false`. This can also be configured inline by adding the `data-enable-storage="false"` attribute to the component element.
 
-<DemoBox src="/demos/theme/disable-storage.html" :show-theme="false"/>
+<DemoBox src="/demos/theme/disable-storage.html" :show-theme="false">
 
 ```html
 <html lang="en" data-ui-theme="enable" data-theme-trigger=".theme-trigger" data-theme-enable-storage="false">
@@ -116,6 +126,8 @@ By default, the theme preference persists across sessions because it is saved to
     </body>
 </html>
 ```
+
+</DemoBox>
 
 ## Light Theme Flash Fix
 
